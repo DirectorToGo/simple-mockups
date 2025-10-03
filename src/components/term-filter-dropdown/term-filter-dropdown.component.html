@@ -1,0 +1,62 @@
+<div class="p-2 border-b border-gray-200" (click)="$event.stopPropagation()">
+    <div class="relative">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400">
+                <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd" />
+            </svg>
+        </span>
+        <input type="text" placeholder="Search terms..." class="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="termSearchQuery()" (input)="onTermSearch($event)">
+    </div>
+</div>
+<div class="p-2 max-h-64 overflow-y-auto">
+    @if (filteredTermsByGroup(); as groups) {
+        @for(category of ['Future', 'Current', 'Historic']; track category) {
+            <div class="mt-2 first:mt-0">
+                <div class="flex items-center justify-between mb-1">
+                    <label class="flex items-center text-sm font-semibold text-gray-800 cursor-pointer" [class.cursor-not-allowed]="selectionMode() === 'single'">
+                        <input type="checkbox" class="sr-only" 
+                               [checked]="isTermGroupChecked(category)" 
+                               [indeterminate]="isTermGroupIndeterminate(category)" 
+                               (change)="toggleTermGroup(category)" 
+                               [disabled]="termsByGroup()[category].length === 0 || selectionMode() === 'single'">
+                        <div class="w-5 h-5 mr-3 flex items-center justify-center border-2 rounded" 
+                             [class]="isTermGroupChecked(category) ? 'bg-pink-600 border-pink-600' : isTermGroupIndeterminate(category) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-400'"
+                             [class.opacity-50]="selectionMode() === 'single' && termsByGroup()[category].length > 0">
+                            @if(isTermGroupChecked(category)) {
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                            }
+                            @if(isTermGroupIndeterminate(category)) {
+                              <svg class="w-4 h-4 text-white absolute" fill="currentColor" viewBox="0 0 16 16"><path d="M3 8a1 1 0 0 1 1-1h8a1 1 0 0 1 0 2H4a1 1 0 0 1-1-1z"/></svg>
+                            }
+                        </div>
+                        <span [class.opacity-50]="selectionMode() === 'single' && termsByGroup()[category].length > 0">{{ category }}</span>
+                    </label>
+                    <button (click)="toggleTermSectionOpen(category)" class="p-1 rounded-full hover:bg-gray-100 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform" [class]="termSectionsOpen()[category] ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                @if (termSectionsOpen()[category]) {
+                <div class="pl-8">
+                    @if (groups[category].length === 0) {
+                    <p class="text-sm text-gray-500 italic">No matching terms</p>
+                    } @else {
+                        @for (term of groups[category]; track term) {
+                            <label class="flex items-center px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer rounded transition-colors">
+                                <input type="checkbox" class="sr-only" [checked]="selectedTerms().includes(term)" (change)="toggleTerm(term)">
+                                <div class="w-5 h-5 mr-3 flex items-center justify-center border-2 rounded" [class]="selectedTerms().includes(term) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-400'">
+                                    @if(selectedTerms().includes(term)) {
+                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                    }
+                                </div>
+                                <span>{{ term }}</span>
+                            </label>
+                        }
+                    }
+                </div>
+                }
+            </div>
+        }
+    }
+</div>

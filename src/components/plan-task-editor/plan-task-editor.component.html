@@ -1,0 +1,1200 @@
+<div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full mx-auto">
+  <div class="grid grid-cols-1 lg:grid-cols-4">
+    <div class="relative flex flex-col border-gray-200" [ngClass]="showHelpSidebar() ? ['lg:col-span-3','lg:border-r'] : ['lg:col-span-4']">
+      <!-- Side handle to toggle help sidebar -->
+      <button type="button"
+              (click)="toggleHelpSidebar()"
+              class="hidden lg:flex items-center justify-center absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-10 rounded-md border border-gray-200 bg-white text-pink-600 shadow hover:bg-pink-50 z-10"
+              [attr.aria-label]="showHelpSidebar() ? 'Hide help' : 'Show help'"
+              title="Toggle help">
+        <span class="text-base leading-none">{{ showHelpSidebar() ? '>' : '<' }}</span>
+      </button>
+
+      <!-- Form Body -->
+      <div class="p-8 space-y-8 flex-grow">
+        <!-- Top Fields & Test Area -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-x-8 gap-y-6">
+          <!-- Column 1: Inputs (60%) -->
+          <div class="space-y-6 md:col-span-3">
+            <div class="relative">
+              <label for="term-button" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900 z-10">Term</label>
+              <div class="relative">
+                <button #termButton id="term-button" (click)="toggleDropdown('term')" data-dropdown-button="term" class="flex items-center justify-between w-full pl-3 pr-2 py-4 text-left border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 bg-white text-sm text-gray-600">
+                  <span class="truncate">{{ task().term }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <div data-dropdown-panel="term" class="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out"
+                    [class.opacity-100]="activeDropdown() === 'term'"
+                    [class.scale-100]="activeDropdown() === 'term'"
+                    [class.opacity-0]="activeDropdown() !== 'term'"
+                    [class.scale-95]="activeDropdown() !== 'term'"
+                    [class.invisible]="activeDropdown() !== 'term'">
+                  <app-term-filter-dropdown
+                    selectionMode="single"
+                    [selected]="task().term"
+                    (selectionChange)="onTermSelectionChange($event)">
+                  </app-term-filter-dropdown>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <input id="task-name" type="text" placeholder="Name" [value]="task().name" (input)="updateTaskName($event)" class="w-full px-3 py-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white"
+                     [class.border-red-500]="!task().name.trim()">
+            </div>
+
+            <div>
+              <input id="task-description" type="text" placeholder="Description" [value]="task().description" (input)="updateTaskDescription($event)" class="w-full px-3 py-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white">
+            </div>
+          </div>
+           <!-- Column 2: Test Condition Area (40%) -->
+          <div class="p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-4 md:col-span-2">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Test section</label>
+                <div class="relative">
+                  <button (click)="toggleDropdown('test-section')" id="test-section-button" [attr.data-dropdown-button]="'test-section'" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 bg-white text-sm">
+                    <span class="truncate">{{ testSectionButtonText() }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <div [attr.data-dropdown-panel]="'test-section'" class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out"
+                      [class.opacity-100]="activeDropdown() === 'test-section'"
+                      [class.scale-100]="activeDropdown() === 'test-section'"
+                      [class.opacity-0]="activeDropdown() !== 'test-section'"
+                      [class.scale-95]="activeDropdown() !== 'test-section'"
+                      [class.invisible]="activeDropdown() !== 'test-section'">
+                    <div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search sections..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="testSectionSearchQuery()" (input)="onTestSectionSearch($event)"></div>
+                    <ul class="py-1 max-h-60 overflow-y-auto">
+                      <li><button (click)="selectTestSection(null)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors italic">Clear selection</button></li>
+                      @for (section of filteredTestSections(); track section.id) {
+                        <li>
+                          <button (click)="selectTestSection(section.id)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                            {{ section.name }}
+                          </button>
+                        </li>
+                      }
+                      @empty {
+                        <li><span class="block px-4 py-2 text-sm text-gray-500">No sections found.</span></li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Result</label>
+                <div class="relative">
+                  <div (click)="(resultViewModel().status === 'evaluated' || resultViewModel().status === 'manual') && toggleDropdown('manual-override')"
+                       [attr.data-dropdown-button]="'manual-override'"
+                       class="w-full min-h-[56px] flex items-center p-2 border border-gray-300 rounded-md bg-white transition-colors"
+                       [class.cursor-pointer]="resultViewModel().status === 'evaluated' || resultViewModel().status === 'manual'"
+                       [class.hover:bg-gray-50]="resultViewModel().status === 'evaluated' || resultViewModel().status === 'manual'"
+                       [class.cursor-default]="resultViewModel().status !== 'evaluated' && resultViewModel().status !== 'manual'">
+                    @if (resultViewModel().status === 'no_section') {
+                      <div class="flex items-center space-x-2 w-full">
+                        <span class="flex-shrink-0 h-6 w-6 rounded-full bg-gray-200 text-gray-600 font-mono font-bold flex items-center justify-center">-</span>
+                        <span class="text-gray-500 text-sm">No section selected</span>
+                      </div>
+                    } @else if (resultViewModel().status === 'invalid') {
+                      <div class="flex items-center space-x-2 w-full">
+                        <span class="flex-shrink-0 h-6 w-6 rounded-full bg-red-100 text-red-600 font-mono font-bold flex items-center justify-center">!</span>
+                        <span class="text-red-600 text-sm">Finish the where condition to run a test.</span>
+                      </div>
+                    } @else if (resultViewModel().data; as result) {
+                      <div class="flex items-center justify-between w-full">
+                        <div class="flex items-center space-x-3">
+                          @if (result.icon) {
+                            <span class="flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center" [class]="result.passes ? 'bg-green-100' : 'bg-red-100'">
+                              <span class="material-symbols-outlined text-sm" [class]="result.passes ? 'text-green-600' : 'text-red-600'">{{ result.icon }}</span>
+                            </span>
+                          } @else {
+                            @switch (result.resultType) {
+                              @case ('Pass') {
+                                <span class="flex-shrink-0 h-6 w-6 rounded-full bg-green-100 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                              }
+                              @case ('Warning') {
+                                <span class="flex-shrink-0 h-6 w-6 rounded-full bg-yellow-100 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                              }
+                              @case ('Fail') {
+                                <span class="flex-shrink-0 h-6 w-6 rounded-full bg-red-100 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                              }
+                              @default {
+                                @if (result.passes) {
+                                  <span class="flex-shrink-0 h-6 w-6 rounded-full bg-green-100 flex items-center justify-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                                      </svg>
+                                  </span>
+                                } @else {
+                                  <span class="flex-shrink-0 h-6 w-6 rounded-full bg-red-100 flex items-center justify-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                                      </svg>
+                                  </span>
+                                }
+                              }
+                            }
+                          }
+
+                          <div class="flex items-baseline space-x-2">
+                             @if(result.customName) {
+                              <span class="font-semibold" [class.text-green-700]="result.passes" [class.text-red-700]="!result.passes">{{ result.customName }}</span>
+                            }
+                            @if(result.displayValue) {
+                              <span class="text-gray-600">{{ result.displayValue }}</span>
+                            }
+                          </div>
+                      </div>
+
+                         @if (result.isManualOverride) {
+                          <button (click)="clearManualOverride(); $event.stopPropagation()" class="p-1 text-gray-500 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors" title="Re-enable automatic evaluation">
+                            <span class="material-symbols-outlined text-xl">link_off</span>
+                          </button>
+                        }
+                      </div>
+
+                    }
+                  </div>
+
+                  <!-- Manual Override Dropdown -->
+                  <div [attr.data-dropdown-panel]="'manual-override'"
+                       class="absolute top-full mt-2 w-72 bg-white rounded-lg shadow-xl z-30 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out"
+                       [class.opacity-100]="activeDropdown() === 'manual-override'"
+                       [class.scale-100]="activeDropdown() === 'manual-override'"
+                       [class.opacity-0]="activeDropdown() !== 'manual-override'"
+                       [class.scale-95]="activeDropdown() !== 'manual-override'"
+                       [class.invisible]="activeDropdown() !== 'manual-override'">
+                    <div class="p-2 flex items-center space-x-2">
+                      <!-- Success Button -->
+                      <button (click)="setManualOverride('pass')" class="flex-1 flex items-center justify-center space-x-2 p-3 border rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">
+                        @switch (task().conditionResult.type) {
+                          @case ('Pass') {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                            </svg>
+                          }
+                          @case ('Warning') {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                          }
+                          @case ('Fail') {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                            </svg>
+                          }
+                          @case ('Custom') {
+                            @if (task().conditionResult.icon; as iconName) {
+                              <span class="material-symbols-outlined h-6 w-6 text-pink-500 flex items-center justify-center">{{ iconName }}</span>
+                            } @else {
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                              </svg>
+                            }
+                          }
+                        }
+                        <span class="text-sm font-medium text-gray-800">{{ task().conditionResult.customName || task().conditionResult.type }}</span>
+                      </button>
+                      <!-- Failure Button -->
+                      <button (click)="setManualOverride('fail')" class="flex-1 flex items-center justify-center space-x-2 p-3 border rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">
+                        @switch (task().conditionFailure.type) {
+                          @case ('Pass') {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                            </svg>
+                          }
+                          @case ('Warning') {
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                          }
+                          @case ('Fail') {
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                            </svg>
+                          }
+                          @case ('Custom') {
+                            @if (task().conditionFailure.icon; as iconName) {
+                              <span class="material-symbols-outlined text-pink-500 text-xl leading-none">{{ iconName }}</span>
+                            } @else {
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                              </svg>
+                            }
+                          }
+                        }
+                        <span class="text-sm font-medium text-gray-800">{{ task().conditionFailure.customName || task().conditionFailure.type }}</span>
+                      </button>
+                    </div>
+
+                      <div class="px-3 pb-3 space-y-2 border-t border-gray-100">
+                        <div class="flex items-center justify-between text-xs text-gray-600 pt-2">
+                          <div class="inline-flex rounded-md border border-gray-200 bg-white shadow-sm">
+                            <button type="button"
+                                    (click)="setValidationContextMode('pass')"
+                                    class="px-3 py-1.5 text-xs font-medium rounded-l-md"
+                                    [class.bg-pink-600]="validationContextMode() === 'pass'"
+                                    [class.text-white]="validationContextMode() === 'pass'"
+                                    [class.text-gray-700]="validationContextMode() !== 'pass'"
+                                    [class.bg-white]="validationContextMode() !== 'pass'">
+                              Pass
+                            </button>
+                            <button type="button"
+                                    (click)="setValidationContextMode('fail')"
+                                    class="px-3 py-1.5 text-xs font-medium rounded-r-md border-l border-gray-200"
+                                    [class.bg-pink-600]="validationContextMode() === 'fail'"
+                                    [class.text-white]="validationContextMode() === 'fail'"
+                                    [class.text-gray-700]="validationContextMode() !== 'fail'"
+                                    [class.bg-white]="validationContextMode() !== 'fail'">
+                              Fail
+                            </button>
+                          </div>
+                          <span>{{ validationContextTotalEntries() }} total</span>
+                        </div>
+                        @if (visibleValidationContextEntries().length > 0) {
+                          <ul class="space-y-2">
+                            @for (entry of visibleValidationContextEntries(); track entry.id; let idx = $index) {
+                              <li class="flex items-center justify-between rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
+                                <div class="flex items-center space-x-3">
+                                  <span class="material-symbols-outlined text-lg" [class.text-green-600]="entry.passes" [class.text-red-600]="!entry.passes">
+                                    {{ entry.passes ? 'check_circle' : 'error' }}
+                                  </span>
+                                  <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ entry.name }}</p>
+                                    <p class="text-xs text-gray-500">{{ entry.label }} validation</p>
+                                  </div>
+                                </div>
+                                <div class="flex items-center justify-end gap-2 text-xs font-medium">
+                                  <button type="button"
+                                          (click)="openPrepStepModal(entry)"
+                                          class="inline-flex items-center px-2.5 py-1 rounded-md border border-pink-200 text-pink-700 bg-pink-50 hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-500/20">
+                                    Prep Step
+                                  </button>
+                                  <button type="button"
+                                          class="inline-flex items-center px-2.5 py-1 rounded-md border border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
+                                          disabled>
+                                    LMS
+                                  </button>
+                                </div>
+                              </li>
+                            }
+                          </ul>
+                          <div class="flex items-center justify-between text-xs text-gray-500">
+                            <span>{{ validationContextRangeLabel() }}</span>
+                            <div class="flex items-center space-x-2">
+                              @if (validationContextTotalEntries() > visibleValidationContextEntries().length) {
+                                <button type="button"
+                                        (click)="goToPreviousValidationPage()"
+                                        class="px-2 py-1 border border-gray-200 rounded-md bg-white text-gray-600 hover:text-pink-600"
+                                        [disabled]="validationContextPageIndex() === 0"
+                                        [class.opacity-50]="validationContextPageIndex() === 0"
+                                        [class.cursor-not-allowed]="validationContextPageIndex() === 0">
+                                  Prev
+                                </button>
+                                <button type="button"
+                                        (click)="goToNextValidationPage()"
+                                        class="px-2 py-1 border border-gray-200 rounded-md bg-white text-gray-600 hover:text-pink-600"
+                                        [disabled]="(validationContextCurrentStart() + visibleValidationContextEntries().length) >= validationContextTotalEntries()"
+                                        [class.opacity-50]="(validationContextCurrentStart() + visibleValidationContextEntries().length) >= validationContextTotalEntries()"
+                                        [class.cursor-not-allowed]="(validationContextCurrentStart() + visibleValidationContextEntries().length) >= validationContextTotalEntries()">
+                                  Next
+                                </button>
+                              }
+                            </div>
+                          </div>
+                        } @else {
+                          <p class="text-xs text-gray-500">No results match this validation mode yet.</p>
+                        }
+                      </div>
+                    @if (task().description) {
+                      <div class="p-4 border-t border-gray-200">
+                        <p class="text-sm text-gray-700">{{ task().description }}</p>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Condition Group Button -->
+        <div class="flex items-center space-x-2">
+          <button (click)="onAddConditionGroup()" class="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+            <span>Add condition group</span>
+          </button>
+          <button (click)="openAiBuilder()" class="flex items-center space-x-2 px-3 py-1.5 border border-transparent rounded-md text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+            <span class="material-symbols-outlined text-base">auto_awesome</span>
+            <span>Build with AI</span>
+          </button>
+        </div>
+
+
+        <!-- Condition Builder -->
+        <div class="space-y-4">
+          @if (task().conditionGroups.length > 0) {
+            @for (group of task().conditionGroups; track group.id; let groupIndex = $index) {
+              <!-- OR Separator -->
+              @if(groupIndex > 0) {
+                <div class="flex items-center">
+                  <div class="flex-grow border-t border-gray-300"></div>
+                  <div class="flex-shrink mx-4">
+                    <span class="px-4 py-1 text-sm font-bold text-gray-500 bg-gray-100 rounded-full">OR</span>
+                  </div>
+                  <div class="flex-grow border-t border-gray-300"></div>
+                </div>
+              }
+
+              <div class="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="text-sm font-semibold text-gray-600">Group {{ groupIndex + 1 }}</h4>
+                  <div class="flex items-center space-x-1">
+                    <button type="button"
+                            class="p-2 rounded-md text-gray-500 hover:text-pink-600 transition-colors"
+                            (click)="undoGroupChanges(group.id)"
+                            [disabled]="!canUndoGroup(group.id)"
+                            [class.opacity-40]="!canUndoGroup(group.id)"
+                            [class.cursor-not-allowed]="!canUndoGroup(group.id)"
+                            title="Undo last change">
+                      <span class="material-symbols-outlined text-base">undo</span>
+                    </button>
+                    <button type="button"
+                            class="p-2 rounded-md text-gray-500 hover:text-pink-600 transition-colors"
+                            (click)="redoGroupChanges(group.id)"
+                            [disabled]="!canRedoGroup(group.id)"
+                            [class.opacity-40]="!canRedoGroup(group.id)"
+                            [class.cursor-not-allowed]="!canRedoGroup(group.id)"
+                            title="Redo change">
+                      <span class="material-symbols-outlined text-base">redo</span>
+                    </button>
+                    <button type="button"
+                            class="p-2 rounded-md text-gray-500 hover:text-pink-600 transition-colors"
+                            (click)="cloneConditionGroup(group.id)"
+                            title="Clone group">
+                      <span class="material-symbols-outlined text-base">content_copy</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  @for(condition of group.conditions; track condition.id; let isFirstCondition = $first) {
+                    <!-- Wrapper for a primary condition and its subs -->
+                    <div class="relative">
+                      <!-- Primary condition -->
+                      <div class="flex items-center space-x-2">
+                        <span class="w-12 text-sm font-medium text-gray-500 flex-shrink-0">{{ isFirstCondition ? 'Where' : 'AND' }}</span>
+                        <div class="flex-grow flex gap-2 items-center">
+                          <!-- Type Dropdown -->
+                          <div class="relative flex-1">
+                            <button (click)="toggleDropdown('type-' + condition.id)" [attr.data-dropdown-button]="'type-' + condition.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!condition.groupType" [class.text-gray-600]="condition.groupType" [class.border-red-500]="isGroupTypeInvalid(condition)" [class.focus:ring-red-500]="isGroupTypeInvalid(condition)" [class.focus:ring-pink-500]="!isGroupTypeInvalid(condition)"><span class="truncate">{{ condition.groupType || 'Select type' }}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
+                            <div [attr.data-dropdown-panel]="'type-' + condition.id" class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'type-' + condition.id" [class.scale-100]="activeDropdown() === 'type-' + condition.id" [class.opacity-0]="activeDropdown() !== 'type-' + condition.id" [class.scale-95]="activeDropdown() !== 'type-' + condition.id" [class.invisible]="activeDropdown() !== 'type-' + condition.id">
+                              <ul class="py-1 max-h-60 overflow-y-auto">
+                                @for (type of conditionGroupTypes; track type) {
+                                  <li><button (click)="selectConditionType(group.id, condition.id, type)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ type }}</button></li>
+                                }
+                              </ul>
+                            </div>
+                          </div>
+                          <!-- Source Data Dropdown -->
+                          @if(condition.groupType) {
+                            <div class="relative flex-1">
+                              <button (click)="toggleDropdown('source-' + condition.id)" [attr.data-dropdown-button]="'source-' + condition.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!condition.source" [class.text-gray-600]="condition.source" [class.border-red-500]="isSourceInvalid(condition)" [class.focus:ring-red-500]="isSourceInvalid(condition)" [class.focus:ring-pink-500]="!isSourceInvalid(condition)"><span class="truncate">{{ condition.source || 'Select source' }}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
+                              <div [attr.data-dropdown-panel]="'source-' + condition.id" class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'source-' + condition.id" [class.scale-100]="activeDropdown() === 'source-' + condition.id" [class.opacity-0]="activeDropdown() !== 'source-' + condition.id" [class.scale-95]="activeDropdown() !== 'source-' + condition.id" [class.invisible]="activeDropdown() !== 'source-' + condition.id"><div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div><ul class="py-1 max-h-60 overflow-y-auto">@for (opt of getFilteredSourceOptionsForCondition(condition); track opt) { <li><button (click)="selectConditionSource(group.id, condition.id, opt)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ opt }}</button></li> }</ul></div>
+                            </div>
+                          }
+                          <!-- Property Dropdown -->
+                          @if(condition.source) {
+                            <div class="relative flex-1">
+                              <button (click)="toggleDropdown('property-' + condition.id)" [attr.data-dropdown-button]="'property-' + condition.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!condition.property" [class.text-gray-600]="condition.property" [class.border-red-500]="isPropertyInvalid(condition)" [class.focus:ring-red-500]="isPropertyInvalid(condition)" [class.focus:ring-pink-500]="!isPropertyInvalid(condition)"><span class="truncate">{{ condition.property || 'Select property' }}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
+                              <div [attr.data-dropdown-panel]="'property-' + condition.id" class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'property-' + condition.id" [class.scale-100]="activeDropdown() === 'property-' + condition.id" [class.opacity-0]="activeDropdown() !== 'property-' + condition.id" [class.scale-95]="activeDropdown() !== 'property-' + condition.id" [class.invisible]="activeDropdown() !== 'property-' + condition.id"><div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div><ul class="py-1 max-h-60 overflow-y-auto">@for(prop of getFilteredPropertiesForCondition(condition); track prop) { <li><button (click)="selectConditionProperty(group.id, condition.id, prop)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ prop }}</button></li> }</ul></div>
+                            </div>
+                          }
+                          <!-- Operator Dropdown -->
+                          @if(condition.property) {
+                            <div class="relative flex-1">
+                              <button (click)="toggleDropdown('operator-' + condition.id)" [attr.data-dropdown-button]="'operator-' + condition.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!condition.operator" [class.text-gray-600]="condition.operator" [class.border-red-500]="isOperatorInvalid(condition)" [class.focus:ring-red-500]="isOperatorInvalid(condition)" [class.focus:ring-pink-500]="!isOperatorInvalid(condition)"><span class="truncate">{{ condition.operator || 'Select operator' }}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
+                              <div [attr.data-dropdown-panel]="'operator-' + condition.id" class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'operator-' + condition.id" [class.scale-100]="activeDropdown() === 'operator-' + condition.id" [class.opacity-0]="activeDropdown() !== 'operator-' + condition.id" [class.scale-95]="activeDropdown() !== 'operator-' + condition.id" [class.invisible]="activeDropdown() !== 'operator-' + condition.id"><div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div><ul class="py-1 max-h-60 overflow-y-auto">@for(op of getFilteredOperatorsForCondition(condition); track op) { <li><button (click)="selectConditionOperator(group.id, condition.id, op)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ op }}</button></li> }</ul></div>
+                            </div>
+                          }
+                          <!-- Value Input -->
+                          @if (condition.operator && doesOperatorRequireValue(condition.operator)) {
+                            <div class="flex-1">
+                              @switch (getPropertyConfigForCondition(condition)?.valueType) {
+                                @case ('select') {
+                                  <div class="relative">
+                                    <button (click)="toggleDropdown('value-' + condition.id)" [attr.data-dropdown-button]="'value-' + condition.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!condition.value" [class.text-gray-600]="condition.value" [class.border-red-500]="isValueInvalid(condition)" [class.focus:ring-red-500]="isValueInvalid(condition)" [class.focus:ring-pink-500]="!isValueInvalid(condition)">
+                                      <span class="truncate">{{ condition.value || 'Select value' }}</span>
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                    <div [attr.data-dropdown-panel]="'value-' + condition.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out"
+                                         [class.opacity-100]="activeDropdown() === 'value-' + condition.id"
+                                         [class.scale-100]="activeDropdown() === 'value-' + condition.id"
+                                         [class.opacity-0]="activeDropdown() !== 'value-' + condition.id"
+                                         [class.scale-95]="activeDropdown() !== 'value-' + condition.id"
+                                         [class.invisible]="activeDropdown() !== 'value-' + condition.id">
+                                      <div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div>
+                                      <ul class="py-1 max-h-60 overflow-y-auto">
+                                        @for (option of getFilteredValueOptions(condition); track option) {
+                                          <li>
+                                            <button (click)="selectConditionValue(group.id, condition.id, option)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                                              {{ option }}
+                                            </button>
+                                          </li>
+                                        }
+                                      </ul>
+                                    </div>
+                                  </div>
+                                }
+                                @case ('string') {
+                                  @let iconName = getValueInputIcon(condition);
+                                  @let showDynamic = allowsDynamicValues(condition);
+                                  <div class="relative">
+                                    @if (iconName) {
+                                      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
+                                        <span class="material-symbols-outlined text-base">{{ iconName }}</span>
+                                      </span>
+                                    }
+                                    <input type="text" placeholder="Value" [value]="condition.value" (input)="updateConditionValue(group.id, condition.id, $event.target.value)" class="w-full py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white" [class.pl-10]="!!iconName" [class.pl-3]="!iconName" [class.pr-10]="showDynamic" [class.pr-3]="!showDynamic" [class.border-red-500]="isValueInvalid(condition)">
+                                    @if (showDynamic) {
+                                      <button (click)="toggleDynamicValueDropdown(condition.id, false, 'string')" [attr.data-dropdown-button]="'dynamic-value-cond-' + condition.id" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 hover:text-pink-600 rounded-r-md">
+                                        <span class="material-symbols-outlined text-base">data_object</span>
+                                      </button>
+                                      <div [attr.data-dropdown-panel]="'dynamic-value-cond-' + condition.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'dynamic-value-cond-' + condition.id" [class.scale-100]="activeDropdown() === 'dynamic-value-cond-' + condition.id" [class.opacity-0]="activeDropdown() !== 'dynamic-value-cond-' + condition.id" [class.scale-95]="activeDropdown() !== 'dynamic-value-cond-' + condition.id" [class.invisible]="activeDropdown() !== 'dynamic-value-cond-' + condition.id">
+                                        <div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div>
+                                        <ul class="py-1 max-h-60 overflow-y-auto">@for(val of filteredDynamicValues(); track val.value) {<li><button (click)="selectDynamicValue(group.id, condition.id, val.value)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"><div class="flex justify-between items-center"><span><strong class="font-semibold">{{ val.value }}</strong> - {{ val.label }}</span><span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{{ val.calculatedValue }}</span></div></button></li>} @empty {<li><span class="block px-4 py-2 text-sm text-gray-500">No dynamic values found.</span></li>}</ul>
+                                      </div>
+                                    }
+                                  </div>
+                                }
+                                @case ('numeric') {
+                                  @let iconName = getValueInputIcon(condition);
+                                  @let showDynamic = allowsDynamicValues(condition);
+                                  <div class="relative">
+                                    @if (iconName) {
+                                      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
+                                        <span class="material-symbols-outlined text-base">{{ iconName }}</span>
+                                      </span>
+                                    }
+                                    <input type="text" placeholder="Value" [value]="condition.value" (input)="updateConditionValue(group.id, condition.id, $event.target.value)" class="w-full py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white" [class.pl-10]="!!iconName" [class.pl-3]="!iconName" [class.pr-10]="showDynamic" [class.pr-3]="!showDynamic" [class.border-red-500]="isValueInvalid(condition)">
+                                    @if (showDynamic) {
+                                      <button (click)="toggleDynamicValueDropdown(condition.id, false, 'numeric')" [attr.data-dropdown-button]="'dynamic-value-cond-' + condition.id" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 hover:text-pink-600 rounded-r-md">
+                                        <span class="material-symbols-outlined text-base">data_object</span>
+                                      </button>
+                                      <div [attr.data-dropdown-panel]="'dynamic-value-cond-' + condition.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'dynamic-value-cond-' + condition.id" [class.scale-100]="activeDropdown() === 'dynamic-value-cond-' + condition.id" [class.opacity-0]="activeDropdown() !== 'dynamic-value-cond-' + condition.id" [class.scale-95]="activeDropdown() !== 'dynamic-value-cond-' + condition.id" [class.invisible]="activeDropdown() !== 'dynamic-value-cond-' + condition.id">
+                                        <div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div>
+                                        <ul class="py-1 max-h-60 overflow-y-auto">@for(val of filteredDynamicValues(); track val.value) {<li><button (click)="selectDynamicValue(group.id, condition.id, val.value)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"><div class="flex justify-between items-center"><span><strong class="font-semibold">{{ val.value }}</strong> - {{ val.label }}</span><span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{{ val.calculatedValue }}</span></div></button></li>} @empty {<li><span class="block px-4 py-2 text-sm text-gray-500">No dynamic values found.</span></li>}</ul>
+                                      </div>
+                                    }
+                                  </div>
+                                }
+                                @case ('date') {
+                                  @let showDynamic = allowsDynamicValues(condition);
+                                  <div class="relative">
+                                    <input #calendarPicker type="date" class="absolute opacity-0 pointer-events-none w-0 h-0" (change)="onCalendarDateSelected(group.id, condition.id, $event.target.value)">
+                                    <button type="button" (click)="openDatePicker(calendarPicker)" class="absolute inset-y-0 left-0 flex items-center pl-3 pr-2 text-gray-500 hover:text-pink-600">
+                                      <span class="material-symbols-outlined text-base">calendar_month</span>
+                                    </button>
+                                    <input type="text" placeholder="YYYY-MM-DD or select dynamic" [value]="condition.value" (input)="updateConditionValue(group.id, condition.id, $event.target.value)" class="w-full py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white pl-10" [class.pr-10]="showDynamic" [class.pr-3]="!showDynamic" [class.border-red-500]="isValueInvalid(condition)">
+                                    @if (showDynamic) {
+                                      <button (click)="toggleDynamicValueDropdown(condition.id, false, 'date')" [attr.data-dropdown-button]="'dynamic-value-cond-' + condition.id" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 hover:text-pink-600 rounded-r-md">
+                                        <span class="material-symbols-outlined text-base">data_object</span>
+                                      </button>
+                                      <div [attr.data-dropdown-panel]="'dynamic-value-cond-' + condition.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'dynamic-value-cond-' + condition.id" [class.scale-100]="activeDropdown() === 'dynamic-value-cond-' + condition.id" [class.opacity-0]="activeDropdown() !== 'dynamic-value-cond-' + condition.id" [class.scale-95]="activeDropdown() !== 'dynamic-value-cond-' + condition.id" [class.invisible]="activeDropdown() !== 'dynamic-value-cond-' + condition.id">
+                                        <div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div>
+                                        <ul class="py-1 max-h-60 overflow-y-auto">@for(val of filteredDynamicValues(); track val.value) {<li><button (click)="selectDynamicValue(group.id, condition.id, val.value)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"><div class="flex justify-between items-center"><span><strong class="font-semibold">{{ val.value }}</strong> - {{ val.label }}</span><span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{{ val.calculatedValue }}</span></div></button></li>} @empty {<li><span class="block px-4 py-2 text-sm text-gray-500">No dynamic values found.</span></li>}</ul>
+                                      </div>
+                                    }
+                                  </div>
+                                }
+                                @default {
+                                  @let iconName = getValueInputIcon(condition);
+                                  @let showDynamic = allowsDynamicValues(condition);
+                                  <div class="relative">
+                                    @if (iconName) {
+                                      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
+                                        <span class="material-symbols-outlined text-base">{{ iconName }}</span>
+                                      </span>
+                                    }
+                                    <input type="text" placeholder="Value" [value]="condition.value" (input)="updateConditionValue(group.id, condition.id, $event.target.value)" class="w-full py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white" [class.pl-10]="!!iconName" [class.pl-3]="!iconName" [class.pr-10]="showDynamic" [class.pr-3]="!showDynamic" [class.border-red-500]="isValueInvalid(condition)">
+                                     @if (showDynamic) {
+                                      <button (click)="toggleDynamicValueDropdown(condition.id, false, 'string')" [attr.data-dropdown-button]="'dynamic-value-cond-' + condition.id" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 hover:text-pink-600 rounded-r-md">
+                                        <span class="material-symbols-outlined text-base">data_object</span>
+                                      </button>
+                                      <div [attr.data-dropdown-panel]="'dynamic-value-cond-' + condition.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'dynamic-value-cond-' + condition.id" [class.scale-100]="activeDropdown() === 'dynamic-value-cond-' + condition.id" [class.opacity-0]="activeDropdown() !== 'dynamic-value-cond-' + condition.id" [class.scale-95]="activeDropdown() !== 'dynamic-value-cond-' + condition.id" [class.invisible]="activeDropdown() !== 'dynamic-value-cond-' + condition.id">
+                                        <div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div>
+                                        <ul class="py-1 max-h-60 overflow-y-auto">@for(val of filteredDynamicValues(); track val.value) {<li><button (click)="selectDynamicValue(group.id, condition.id, val.value)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"><div class="flex justify-between items-center"><span><strong class="font-semibold">{{ val.value }}</strong> - {{ val.label }}</span><span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{{ val.calculatedValue }}</span></div></button></li>} @empty {<li><span class="block px-4 py-2 text-sm text-gray-500">No dynamic values found.</span></li>}</ul>
+                                      </div>
+                                     }
+                                  </div>
+                                }
+                              }
+                            </div>
+                          }
+                        </div>
+                        <button (click)="removeCondition(group.id, condition.id)" class="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                      </div>
+
+                      <!-- Sub-conditions -->
+                      @if (showSubConditionsFor(condition)) {
+                        <div class="relative pl-16 pt-2"
+                             [class.bg-red-50]="isSubConditionRequirementUnmet(condition)"
+                             [class.rounded-md]="isSubConditionRequirementUnmet(condition)">
+                          <div class="absolute left-[26px] top-0 bottom-0 w-px"
+                               [class.bg-red-400]="isSubConditionRequirementUnmet(condition)"
+                               [class.bg-gray-300]="!isSubConditionRequirementUnmet(condition)"></div>
+                            @for (sub of condition.subConditions ?? []; track sub.id; let isFirstSub = $first) {
+                              <div class="flex items-center space-x-2 mt-2 relative">
+                                <div class="absolute -left-[38px] top-1/2 -translate-y-1/2 w-4 border-t"
+                                     [class.border-red-400]="isSubConditionRequirementUnmet(condition)"
+                                     [class.border-gray-300]="!isSubConditionRequirementUnmet(condition)"></div>
+                                 <span class="w-12 text-sm font-medium flex-shrink-0"
+                                       [class.text-red-600]="isSubConditionRequirementUnmet(condition)"
+                                       [class.text-gray-500]="!isSubConditionRequirementUnmet(condition)">{{ isFirstSub ? 'Where' : 'AND' }}</span>
+                                <div class="flex-grow flex gap-2 items-center">
+                                  <!-- Property Dropdown for sub-condition -->
+                                  <div class="relative flex-1">
+                                    <button (click)="toggleDropdown('sub-prop-' + sub.id)" [attr.data-dropdown-button]="'sub-prop-' + sub.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!sub.property" [class.text-gray-600]="sub.property" [class.border-red-500]="isSubConditionPropertyInvalid(sub)" [class.focus:ring-red-500]="isSubConditionPropertyInvalid(sub)" [class.focus:ring-pink-500]="!isSubConditionPropertyInvalid(sub)"><span class="truncate">{{ sub.property || 'Select property' }}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
+                                    <div [attr.data-dropdown-panel]="'sub-prop-' + sub.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'sub-prop-' + sub.id" [class.scale-100]="activeDropdown() === 'sub-prop-' + sub.id" [class.opacity-0]="activeDropdown() !== 'sub-prop-' + sub.id" [class.scale-95]="activeDropdown() !== 'sub-prop-' + sub.id" [class.invisible]="activeDropdown() !== 'sub-prop-' + sub.id"><div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div><ul class="py-1 max-h-60 overflow-y-auto">@for(prop of getFilteredSubConditionPropertyOptions(condition); track prop) { <li><button (click)="selectSubConditionProperty(group.id, condition.id, sub.id, prop)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ prop }}</button></li> }</ul></div>
+                                  </div>
+                                  <!-- Operator Dropdown for sub-condition -->
+                                  @if(sub.property) {
+                                    <div class="relative flex-1">
+                                       <button (click)="toggleDropdown('sub-op-' + sub.id)" [attr.data-dropdown-button]="'sub-op-' + sub.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!sub.operator" [class.text-gray-600]="sub.operator" [class.border-red-500]="isOperatorInvalid(sub)" [class.focus:ring-red-500]="isOperatorInvalid(sub)" [class.focus:ring-pink-500]="!isOperatorInvalid(sub)"><span class="truncate">{{ sub.operator || 'Select operator' }}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
+                                      <div [attr.data-dropdown-panel]="'sub-op-' + sub.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'sub-op-' + sub.id" [class.scale-100]="activeDropdown() === 'sub-op-' + sub.id" [class.opacity-0]="activeDropdown() !== 'sub-op-' + sub.id" [class.scale-95]="activeDropdown() !== 'sub-op-' + sub.id" [class.invisible]="activeDropdown() !== 'sub-op-' + sub.id"><div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div><ul class="py-1 max-h-60 overflow-y-auto">@for(op of getFilteredSubConditionOperatorOptions(condition, sub); track op) { <li><button (click)="selectSubConditionOperator(group.id, condition.id, sub.id, op)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ op }}</button></li> }</ul></div>
+                                    </div>
+                                  }
+                                  <!-- Value input for sub-condition -->
+                                  @if(sub.operator && doesOperatorRequireValue(sub.operator)) {
+                                     <div class="flex-1">
+                                      @switch (getSubConditionPropertyConfig(condition, sub)?.valueType) {
+                                        @case ('select') {
+                                          <div class="relative">
+                                            <button (click)="toggleDropdown('sub-val-' + sub.id)" [attr.data-dropdown-button]="'sub-val-' + sub.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!sub.value" [class.text-gray-600]="sub.value" [class.border-red-500]="isValueInvalid(sub)" [class.focus:ring-red-500]="isValueInvalid(sub)" [class.focus:ring-pink-500]="!isValueInvalid(sub)">
+                                              <span class="truncate">{{ sub.value || 'Select value' }}</span>
+                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                            </button>
+                                            <div [attr.data-dropdown-panel]="'sub-val-' + sub.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out"
+                                                 [class.opacity-100]="activeDropdown() === 'sub-val-' + sub.id"
+                                                 [class.scale-100]="activeDropdown() === 'sub-val-' + sub.id"
+                                                 [class.opacity-0]="activeDropdown() !== 'sub-val-' + sub.id"
+                                                 [class.scale-95]="activeDropdown() !== 'sub-val-' + sub.id"
+                                                 [class.invisible]="activeDropdown() !== 'sub-val-' + sub.id">
+                                              <div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div>
+                                              <ul class="py-1 max-h-60 overflow-y-auto">
+                                                @for (option of getFilteredSubConditionValueOptions(condition, sub); track option) {
+                                                  <li>
+                                                    <button (click)="selectSubConditionValue(group.id, condition.id, sub.id, option)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                                                      {{ option }}
+                                                    </button>
+                                                  </li>
+                                                }
+                                              </ul>
+                                            </div>
+                                          </div>
+                                        }
+                                        @case ('numeric') {
+                                          @let iconName = getSubConditionValueIcon(condition, sub);
+                                          @let showDynamic = allowsDynamicValuesForSub(condition, sub);
+                                          <div class="relative">
+                                            @if (iconName) {
+                                              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
+                                                <span class="material-symbols-outlined text-base">{{ iconName }}</span>
+                                              </span>
+                                            }
+                                            <input type="text" placeholder="Value" [value]="sub.value" (input)="updateSubConditionValue(group.id, condition.id, sub.id, $event.target.value)" class="w-full py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white" [class.pl-10]="!!iconName" [class.pl-3]="!iconName" [class.pr-10]="showDynamic" [class.pr-3]="!showDynamic" [class.border-red-500]="isValueInvalid(sub)">
+                                            @if (showDynamic) {
+                                              <button (click)="toggleDynamicValueDropdown(sub.id, true, 'numeric')" [attr.data-dropdown-button]="'dynamic-value-sub-' + sub.id" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 hover:text-pink-600 rounded-r-md">
+                                                <span class="material-symbols-outlined text-base">data_object</span>
+                                              </button>
+                                              <div [attr.data-dropdown-panel]="'dynamic-value-sub-' + sub.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'dynamic-value-sub-' + sub.id" [class.scale-100]="activeDropdown() === 'dynamic-value-sub-' + sub.id" [class.opacity-0]="activeDropdown() !== 'dynamic-value-sub-' + sub.id" [class.scale-95]="activeDropdown() !== 'dynamic-value-sub-' + sub.id" [class.invisible]="activeDropdown() !== 'dynamic-value-sub-' + sub.id">
+                                                <div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div>
+                                                <ul class="py-1 max-h-60 overflow-y-auto">@for(val of filteredDynamicValues(); track val.value) {<li><button (click)="selectDynamicValue(group.id, condition.id, val.value, sub.id)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"><div class="flex justify-between items-center"><span><strong class="font-semibold">{{ val.value }}</strong> - {{ val.label }}</span><span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{{ val.calculatedValue }}</span></div></button></li>} @empty {<li><span class="block px-4 py-2 text-sm text-gray-500">No dynamic values found.</span></li>}</ul>
+                                              </div>
+                                            }
+                                          </div>
+                                        }
+                                        @case ('date') {
+                                          @let showDynamic = allowsDynamicValuesForSub(condition, sub);
+                                          <div class="relative">
+                                            <input #subDatePicker type="date" class="absolute opacity-0 pointer-events-none w-0 h-0" (change)="onCalendarDateSelectedForSubCondition(group.id, condition.id, sub.id, $event.target.value)">
+                                            <button type="button" (click)="openDatePicker(subDatePicker)" class="absolute inset-y-0 left-0 flex items-center pl-3 pr-2 text-gray-500 hover:text-pink-600">
+                                              <span class="material-symbols-outlined text-base">calendar_month</span>
+                                            </button>
+                                            <input type="text" placeholder="YYYY-MM-DD or select dynamic" [value]="sub.value" (input)="updateSubConditionValue(group.id, condition.id, sub.id, $event.target.value)" class="w-full py-3 pl-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white" [class.pr-10]="showDynamic" [class.pr-3]="!showDynamic" [class.border-red-500]="isValueInvalid(sub)">
+                                            @if (showDynamic) {
+                                              <button (click)="toggleDynamicValueDropdown(sub.id, true, 'date')" [attr.data-dropdown-button]="'dynamic-value-sub-' + sub.id" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 hover:text-pink-600 rounded-r-md">
+                                                <span class="material-symbols-outlined text-base">data_object</span>
+                                              </button>
+                                              <div [attr.data-dropdown-panel]="'dynamic-value-sub-' + sub.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'dynamic-value-sub-' + sub.id" [class.scale-100]="activeDropdown() === 'dynamic-value-sub-' + sub.id" [class.opacity-0]="activeDropdown() !== 'dynamic-value-sub-' + sub.id" [class.scale-95]="activeDropdown() !== 'dynamic-value-sub-' + sub.id" [class.invisible]="activeDropdown() !== 'dynamic-value-sub-' + sub.id">
+                                                <div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div>
+                                                <ul class="py-1 max-h-60 overflow-y-auto">@for(val of filteredDynamicValues(); track val.value) {<li><button (click)="selectDynamicValue(group.id, condition.id, val.value, sub.id)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"><div class="flex justify-between items-center"><span><strong class="font-semibold">{{ val.value }}</strong> - {{ val.label }}</span><span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{{ val.calculatedValue }}</span></div></button></li>} @empty {<li><span class="block px-4 py-2 text-sm text-gray-500">No dynamic values found.</span></li>}</ul>
+                                              </div>
+                                            }
+                                          </div>
+                                        }
+                                        @default {
+                                          @let iconName = getSubConditionValueIcon(condition, sub);
+                                          @let showDynamic = allowsDynamicValuesForSub(condition, sub);
+                                          <div class="relative">
+                                            @if (iconName) {
+                                              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
+                                                <span class="material-symbols-outlined text-base">{{ iconName }}</span>
+                                              </span>
+                                            }
+                                            <input type="text" placeholder="Value" [value]="sub.value" (input)="updateSubConditionValue(group.id, condition.id, sub.id, $event.target.value)" class="w-full py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white" [class.pl-10]="!!iconName" [class.pl-3]="!iconName" [class.pr-10]="showDynamic" [class.pr-3]="!showDynamic" [class.border-red-500]="isValueInvalid(sub)">
+                                            @if (showDynamic) {
+                                              <button (click)="toggleDynamicValueDropdown(sub.id, true, 'string')" [attr.data-dropdown-button]="'dynamic-value-sub-' + sub.id" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 hover:text-pink-600 rounded-r-md">
+                                                <span class="material-symbols-outlined text-base">data_object</span>
+                                              </button>
+                                              <div [attr.data-dropdown-panel]="'dynamic-value-sub-' + sub.id" class="absolute left-0 mt-2 min-w-full w-96 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'dynamic-value-sub-' + sub.id" [class.scale-100]="activeDropdown() === 'dynamic-value-sub-' + sub.id" [class.opacity-0]="activeDropdown() !== 'dynamic-value-sub-' + sub.id" [class.scale-95]="activeDropdown() !== 'dynamic-value-sub-' + sub.id" [class.invisible]="activeDropdown() !== 'dynamic-value-sub-' + sub.id">
+                                                <div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div>
+                                                <ul class="py-1 max-h-60 overflow-y-auto">@for(val of filteredDynamicValues(); track val.value) {<li><button (click)="selectDynamicValue(group.id, condition.id, val.value, sub.id)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"><div class="flex justify-between items-center"><span><strong class="font-semibold">{{ val.value }}</strong> - {{ val.label }}</span><span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{{ val.calculatedValue }}</span></div></button></li>} @empty {<li><span class="block px-4 py-2 text-sm text-gray-500">No dynamic values found.</span></li>}</ul>
+                                              </div>
+                                            }
+                                          </div>
+                                        }
+                                      }
+                                    </div>
+                                  }
+                                </div>
+                                <button (click)="removeSubCondition(condition.id, sub.id)" class="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                              </div>
+                            }
+                          <div class="pt-2 pl-16 space-y-1">
+                            @if (isSubConditionRequirementUnmet(condition)) {
+                              <p class="text-xs text-red-600">Add at least one where sub condition to complete this rule.</p>
+                            }
+                            <button (click)="addSubCondition(condition.id)"
+                                    class="text-sm font-medium transition-colors"
+                                    [class.text-gray-700]="!isSubConditionRequirementUnmet(condition)"
+                                    [class.text-red-600]="isSubConditionRequirementUnmet(condition)"
+                                    [class.hover:text-gray-900]="!isSubConditionRequirementUnmet(condition)"
+                                    [class.hover:text-red-700]="isSubConditionRequirementUnmet(condition)">+ Add sub condition</button>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <div class="pt-2 pl-12">
+                    <button (click)="addCondition(group)" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">+ Add condition</button>
+                  </div>
+                </div>
+              </div>
+            }
+          } @else {
+            <div class="text-center py-8 px-4 border-2 border-dashed border-gray-300 rounded-lg">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              <h3 class="mt-2 text-sm font-semibold text-gray-900">No conditions defined</h3>
+              <p class="mt-1 text-sm text-gray-500">Get started by adding a condition group.</p>
+            </div>
+          }
+        </div>
+
+        <!-- Display Type -->
+        <div class="space-y-3">
+          <h3 class="text-lg font-medium text-gray-900">Display Type</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            @for (type of displayTypes; track type) {
+              <button (click)="selectDisplayType(type)"
+                      [disabled]="!availableDisplayTypes()[type]"
+                      class="relative p-4 border rounded-md text-center transition-colors bg-white"
+                      [class.border-pink-500]="task().displayType === type"
+                      [class.ring-1]="task().displayType === type"
+                      [class.ring-pink-500]="task().displayType === type"
+                      [class.text-gray-700]="task().displayType !== type"
+                      [class.hover:bg-gray-50]="availableDisplayTypes()[type] && task().displayType !== type"
+                      [class.opacity-50]="!availableDisplayTypes()[type]"
+                      [class.cursor-not-allowed]="!availableDisplayTypes()[type]">
+                @if (task().displayType === type) {
+                  <div class="absolute top-2 right-2 w-5 h-5 bg-pink-600 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
+                }
+                <span class="text-3xl font-bold block h-10 flex items-center justify-center" [class.text-pink-600]="task().displayType === type">
+                  @if (type === 'Yes/No') {
+                    <span class="material-symbols-outlined text-4xl">
+                      toggle_off
+                    </span>
+                  }
+                  @if (type === 'Number') { # }
+                  @if (type === 'Fraction') { ¾ }
+                  @if (type === 'Percent') { % }
+                  @if (type === 'Date') {
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  }
+                  @if (type === 'Status Label') {
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
+                    </svg>
+                  }
+                </span>
+                <span class="text-sm font-medium block" [class.text-pink-600]="task().displayType === type">{{ type }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+
+
+
+
+
+        <!-- Customize Pass/Fail Toggle -->
+        <div class="space-y-3">
+            <label class="flex items-center cursor-pointer">
+                <div class="relative">
+                    <input type="checkbox" class="sr-only" [checked]="customizePassFailStatus()" (change)="updateCustomizePassFailStatus($event)">
+                    <div class="block w-14 h-8 rounded-full" [class]="customizePassFailStatus() ? 'bg-pink-600' : 'bg-gray-200'"></div>
+                    <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform" [class.translate-x-6]="customizePassFailStatus()"></div>
+                </div>
+                <span class="ml-3 text-sm font-medium text-gray-700">Customize Pass/Fail Status</span>
+            </label>
+        </div>
+
+        @if(customizePassFailStatus()) {
+          <div class="p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-6">
+            <!-- Condition Pass -->
+            <div class="space-y-3">
+              <h3 class="text-lg font-medium text-gray-900">Condition Pass</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                @for (res of conditionResultOptions; track res.type) {
+                  <button (click)="selectConditionResult(res.type)"
+                          [disabled]="res.type !== 'Custom' && task().conditionFailure.type === res.type"
+                          class="relative p-4 border rounded-md text-center transition-colors flex flex-col justify-between disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                          [class]="task().conditionResult.type === res.type ? 'border-pink-500 ring-1 ring-pink-500 bg-white' : 'bg-white text-gray-700 hover:bg-gray-50'">
+                    @if (task().conditionResult.type === res.type) {
+                      <div class="absolute top-2 right-2 w-5 h-5 bg-pink-600 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
+                    }
+                    <div class="flex-grow flex items-center justify-center">
+                      @switch (res.type) {
+                        @case ('Pass') {
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                          </svg>
+                        }
+                        @case ('Warning') {
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        }
+                        @case ('Fail') {
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                          </svg>
+                        }
+                        @case ('Custom') {
+                          @if(task().conditionResult.type === 'Custom' && task().conditionResult.icon; as iconName) {
+                            <span class="material-symbols-outlined text-4xl text-pink-500">{{ iconName }}</span>
+                          } @else {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto" [class]="task().conditionResult.type === 'Custom' ? 'text-pink-500' : 'text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                          }
+                        }
+                      }
+                    </div>
+                    <span class="text-sm font-medium block mt-2" [class.text-pink-600]="task().conditionResult.type === res.type">{{ res.type === 'Custom' ? (task().conditionResult.customName || 'Custom') : res.label }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Condition Fail -->
+            <div class="space-y-3">
+              <h3 class="text-lg font-medium text-gray-900">Condition Fail</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                @for (res of conditionResultOptions; track res.type) {
+                  <button (click)="selectConditionFailure(res.type)"
+                          [disabled]="res.type !== 'Custom' && task().conditionResult.type === res.type"
+                          class="relative p-4 border rounded-md text-center transition-colors flex flex-col justify-between disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                          [class]="task().conditionFailure.type === res.type ? 'border-pink-500 ring-1 ring-pink-500 bg-white' : 'bg-white text-gray-700 hover:bg-gray-50'">
+                    @if (task().conditionFailure.type === res.type) {
+                      <div class="absolute top-2 right-2 w-5 h-5 bg-pink-600 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
+                    }
+                    <div class="flex-grow flex items-center justify-center">
+                      @switch (res.type) {
+                        @case ('Pass') {
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                          </svg>
+                        }
+                        @case ('Warning') {
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        }
+                        @case ('Fail') {
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                          </svg>
+                        }
+                        @case ('Custom') {
+                          @if(task().conditionFailure.type === 'Custom' && task().conditionFailure.icon; as iconName) {
+                            <span class="material-symbols-outlined text-4xl text-pink-500">{{ iconName }}</span>
+                          } @else {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto" [class]="task().conditionFailure.type === 'Custom' ? 'text-pink-500' : 'text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                          }
+                        }
+                      }
+                    </div>
+                    <span class="text-sm font-medium block mt-2" [class.text-pink-600]="task().conditionFailure.type === res.type">{{ res.type === 'Custom' ? (task().conditionFailure.customName || 'Custom') : res.label }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Toggles -->
+        <div class="space-y-4">
+          <label class="flex items-center cursor-pointer">
+            <div class="relative"><input type="checkbox" class="sr-only" [checked]="task().allowView" (change)="updateTaskAllowView($event)"><div class="block w-14 h-8 rounded-full" [class]="task().allowView ? 'bg-pink-600' : 'bg-gray-200'"></div><div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform" [class.translate-x-6]="task().allowView"></div></div>
+            <span class="ml-3 text-sm font-medium text-gray-700">Allow instructor(s) to view this task.</span>
+          </label>
+           <label class="flex items-center cursor-pointer transition-opacity" [class.opacity-50]="!task().allowView" [class.cursor-not-allowed]="!task().allowView">
+            <div class="relative">
+              <input type="checkbox" class="sr-only" [checked]="task().allowEdit" (change)="updateTaskAllowEdit($event)" [disabled]="!task().allowView">
+              <div class="block w-14 h-8 rounded-full" [class]="task().allowEdit ? 'bg-pink-600' : 'bg-gray-200'"></div>
+              <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform" [class.translate-x-6]="task().allowEdit"></div>
+            </div>
+            <span class="ml-3 text-sm font-medium text-gray-700">Allow instructor(s) to edit/override this task.</span>
+          </label>
+        </div>
+      </div>
+
+       <!-- Footer -->
+      <div class="p-6 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3 rounded-bl-lg">
+        <button (click)="cancelChanges()" type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">Cancel</button>
+        <button (click)="saveChanges()" type="button"
+                class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
+                [disabled]="isFormInvalid()"
+                [class.bg-pink-600]="!isFormInvalid()"
+                [class.hover:bg-pink-700]="!isFormInvalid()"
+                [class.bg-gray-400]="isFormInvalid()"
+                [class.cursor-not-allowed]="isFormInvalid()">Save</button>
+      </div>
+    </div>
+
+    @if (showHelpSidebar()) {
+      <div class="lg:col-span-1">
+        <div class="bg-pink-50 rounded-r-lg p-6 h-full">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-2xl font-bold text-gray-800">How to Configure a Prep Task</h2>
+          </div>
+          <div class="space-y-4">
+          <div>
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                <span class="material-symbols-outlined text-gray-900">
+                  calendar_today
+                </span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900">Term</h3>
+            </div>
+            <p class="mt-2 text-gray-700">Choose which academic term this task should apply to.</p>
+          </div>
+          <hr class="border-gray-200">
+          <div>
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                <span class="material-symbols-outlined text-gray-900">
+                  title
+                </span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900">Name</h3>
+            </div>
+            <p class="mt-2 text-gray-700">Appears as the task title in the plan column and on the task details page.</p>
+          </div>
+          <hr class="border-gray-200">
+          <div>
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                 <span class="material-symbols-outlined text-gray-900">
+                  description
+                </span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900">Description</h3>
+            </div>
+            <p class="mt-2 text-gray-700">Shown to instructors as guidance when they view or select the task.</p>
+          </div>
+          <hr class="border-gray-200">
+          <div>
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                 <span class="material-symbols-outlined text-gray-900">
+                  tune
+                </span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900">Condition Group</h3>
+            </div>
+            <p class="mt-2 text-gray-700">Sets the logic that determines whether the task passes or fails.</p>
+          </div>
+          <hr class="border-gray-200">
+          <div>
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                <span class="material-symbols-outlined text-gray-900">
+                  visibility
+                </span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900">Display Type</h3>
+            </div>
+            <p class="mt-2 text-gray-700">Controls how results appear in the Prep Plan table (e.g., Pass/Fail, Percent, Number, Date).</p>
+          </div>
+          <hr class="border-gray-200">
+          <div>
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                <span class="material-symbols-outlined text-gray-900">
+                  edit
+                </span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900">Instructor Editing</h3>
+            </div>
+            <ul class="mt-2 text-gray-700 list-disc list-inside space-y-2">
+              <li><strong>Allow instructor to view task:</strong> Makes it visible in the Prep LTI.</li>
+              <li><strong>Allow instructor to override task:</strong> Lets them manually mark completion in the LTI.</li>
+            </ul>
+          </div>
+        </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+
+<!-- Custom Result Name Modal -->
+@if(showCustomResultModal()) {
+  <div (click)="cancelCustomResultName()" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-in-out opacity-100">
+    <div (click)="$event.stopPropagation()" class="bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 ease-in-out scale-100">
+      <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-xl font-semibold text-gray-800">Set Custom Result</h3>
+        <button (click)="cancelCustomResultName()" class="p-1 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label for="custom-result-name" class="block text-sm font-medium text-gray-700 mb-1">Result Name</label>
+          <input id="custom-result-name" type="text" [value]="customResultName()" (input)="customResultName.set($event.target.value)" placeholder="e.g., At Risk" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Choose an icon</label>
+          <div class="grid grid-cols-4 gap-2">
+            @for (iconName of iconChoices; track iconName) {
+              <button (click)="selectIcon(iconName)" class="p-2 border rounded-md flex items-center justify-center transition-colors" [class]="customResultIcon() === iconName ? 'border-pink-500 ring-2 ring-pink-500' : 'border-gray-300 hover:border-pink-400'">
+                <span class="material-symbols-outlined text-3xl text-gray-600">{{ iconName }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3 rounded-b-lg">
+        <button (click)="cancelCustomResultName()" type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="saveCustomResultName()" type="button" class="px-4 py-2 bg-pink-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-pink-700">Save</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Prep Step Modal -->
+@if(showPrepStepsModal()) {
+  <div (click)="closePrepStepModal()" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-in-out opacity-100">
+    <div (click)="$event.stopPropagation()" class="bg-white rounded-lg shadow-2xl w-full max-w-lg transform transition-all duration-300 ease-in-out scale-100">
+      <div class="p-5 border-b border-gray-200 flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-semibold text-gray-800">Prep Step</h2>
+          @if (currentPrepStepEntry(); as entry) {
+            <p class="text-sm text-gray-500 mt-1">{{ entry.label }} — {{ entry.name }}</p>
+          }
+        </div>
+        <button (click)="closePrepStepModal()" class="p-1 rounded-full text-gray-500 hover:bg-gray-100 transition-colors" aria-label="Close Prep Step">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-5">
+        @if (currentPrepStepEntry(); as entry) {
+          <p class="text-xs text-gray-500">Adjust attributes inline to simulate Prep Step edits.</p>
+          @let prepAttributes = currentPrepStepAttributes();
+          @if (prepAttributes.length > 0) {
+            <div class="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+              @for (attr of prepAttributes; track attr.key) {
+                <div class="space-y-1">
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ attr.label }}</label>
+                  @if(attr.value?.length > 60 || attr.value?.includes('\n') || attr.value?.includes(',')) {
+                    <textarea rows="3"
+                              class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                              [value]="attr.value"
+                              (input)="updatePrepStepEdit(attr.key, $any($event.target).value)"></textarea>
+                  } @else {
+                    <input type="text"
+                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                           [value]="attr.value"
+                           (input)="updatePrepStepEdit(attr.key, $any($event.target).value)">
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-sm text-gray-600">No attributes available for this entry.</p>
+          }
+
+          <div class="flex items-center justify-between text-xs text-gray-500 pt-4 border-t border-gray-200">
+            <button type="button" (click)="previousPrepStepEntry()" class="text-pink-600 hover:text-pink-700 font-medium">Previous course</button>
+            <button type="button" (click)="nextPrepStepEntry()" class="text-pink-600 hover:text-pink-700 font-medium">Next course</button>
+          </div>
+        } @else {
+          <p class="text-sm text-gray-600">No validation context entries available.</p>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- AI Builder Modal -->
+@if(showAiBuilderModal()) {
+  <div (click)="closeAiBuilder()" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 transition-opacity duration-300 ease-in-out opacity-100">
+    <div (click)="$event.stopPropagation()" class="bg-white rounded-lg shadow-xl w-full max-w-2xl transform transition-all duration-300 ease-in-out scale-100 flex flex-col max-h-[90vh]">
+      <div class="p-5 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
+        <div class="flex items-center space-x-2">
+          <span class="material-symbols-outlined text-pink-600">auto_awesome</span>
+          <h3 class="text-xl font-semibold text-gray-800">Build with AI</h3>
+        </div>
+        <button (click)="closeAiBuilder()" class="p-1 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <div class="p-6 flex-grow overflow-y-auto">
+        <div class="space-y-4">
+          @if(!isAiConfigured()) {
+            <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <label for="ai-api-key" class="block text-sm font-medium text-yellow-800 mb-1">Google Generative AI API Key</label>
+              <div class="flex gap-2">
+                <input id="ai-api-key" type="password" [value]="aiApiKeyInput()" (input)="aiApiKeyInput.set($any($event.target).value)" class="flex-1 px-3 py-2 border border-yellow-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400" placeholder="AIza...">
+                <button type="button" (click)="saveAiApiKey()" class="px-3 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700">Save</button>
+              </div>
+              <p class="mt-1 text-xs text-yellow-800">Stored in your browser (localStorage) for this app.</p>
+            </div>
+          }
+
+          <div>
+            <label for="ai-prompt" class="block text-sm font-medium text-gray-700 mb-1">Describe what you want to validate</label>
+            <textarea id="ai-prompt" rows="4" [value]="aiPrompt()" (input)="aiPrompt.set($event.target.value)" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900 placeholder:text-gray-500" placeholder="e.g., 'Check if the syllabus is published and has at least 3 materials'"></textarea>
+          </div>
+
+          @if(isGeneratingWithAi()) {
+            <div class="flex items-center justify-center p-8">
+              <div class="flex items-center space-x-3">
+                <svg class="animate-spin h-6 w-6 text-pink-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-gray-600">Generating conditions...</span>
+              </div>
+            </div>
+          } @else if (aiError(); as error) {
+            <div class="p-4 bg-red-50 border border-red-200 text-red-800 rounded-md">
+              <p><strong class="font-semibold">Error:</strong> {{ error }}</p>
+            </div>
+          } @else if (generatedAiResult(); as result) {
+            <div>
+              @if(result.isValidRequest) {
+                <div class="p-4 bg-green-50 border border-green-200 rounded-lg space-y-4">
+                  <h4 class="font-semibold text-gray-800">Generated Result:</h4>
+                  @if(result.taskName) {
+                    <p class="text-sm"><strong class="text-gray-600">Suggested Name:</strong> <span class="text-gray-900">{{ result.taskName }}</span></p>
+                  }
+                  @if (result.conditionGroups; as groups) {
+                    <div class="space-y-3">
+                      @for(group of groups; track $index; let groupIndex = $index) {
+                        @if(groupIndex > 0) { <div class="text-center font-bold text-gray-500 text-sm py-1">OR</div> }
+
+                        <div class="bg-white p-3 rounded-md border border-gray-200 space-y-2">
+                          @for(condition of group.conditions; track $index; let isFirst = $first) {
+
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                              <span class="font-medium text-gray-700">{{ isFirst ? 'Where' : 'AND' }}</span>
+                              <span class="font-semibold text-pink-700">{{ condition.groupType }}</span>
+                              <span class="text-gray-400">&gt;</span>
+                              <span class="font-semibold text-pink-700">{{ condition.source }}</span>
+                              <span class="text-gray-400">&gt;</span>
+                              <span class="font-semibold text-gray-800">{{ condition.property }}</span>
+                              <span class="text-pink-700">{{ condition.operator }}</span>
+                              @if(doesOperatorRequireValue(condition.operator)) {
+                                <span class="font-mono bg-pink-50 text-pink-700 px-2 py-0.5 rounded-md text-xs">{{ condition.value }}</span>
+                              }
+                            </div>
+
+                            @if(condition.subConditions && condition.subConditions.length > 0) {
+                              <div class="pl-8 space-y-1 pt-1">
+                                @for(sub of condition.subConditions; track $index) {
+                                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                                    <span class="font-medium text-gray-700">AND</span>
+                                    <span class="font-semibold text-gray-800">{{ sub.property }}</span>
+                                    <span class="text-pink-700">{{ sub.operator }}</span>
+                                    @if(doesOperatorRequireValue(sub.operator)) {
+                                      <span class="font-mono bg-pink-50 text-pink-700 px-2 py-0.5 rounded-md text-xs">{{ sub.value }}</span>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            }
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg space-y-2">
+                  <h4 class="font-semibold text-yellow-800">Clarification Needed</h4>
+                  <p class="text-yellow-900">{{ result.clarification }}</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+      <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3 flex-shrink-0">
+        <button (click)="closeAiBuilder()" type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+
+        @if(generatedAiResult() === null) {
+          <!-- Initial state: Generate button -->
+          <button (click)="generateWithAi()" type="button" class="px-4 py-2 bg-pink-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-pink-700 disabled:bg-gray-400 disabled:cursor-not-allowed" [disabled]="!isAiConfigured() || isGeneratingWithAi() || !aiPrompt().trim()">
+            Generate
+          </button>
+        } @else {
+          <!-- After generation: Regenerate is always an option -->
+          <button (click)="generateWithAi()" type="button"
+                  class="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  [class]="generatedAiResult()?.isValidRequest ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50' : 'bg-pink-600 border border-transparent text-white hover:bg-pink-700'"
+                  [disabled]="!isAiConfigured() || isGeneratingWithAi() || !aiPrompt().trim()">
+            Regenerate
+          </button>
+
+          <!-- Add to Task only appears if the result is valid -->
+          @if(generatedAiResult()?.isValidRequest) {
+            <button (click)="addAiConditions()" type="button" class="px-4 py-2 bg-pink-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-pink-700">
+              Add to Task
+            </button>
+          }
+        }
+      </div>
+    </div>
+  </div>
+}

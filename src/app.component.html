@@ -1,0 +1,489 @@
+<div class="p-4 sm:p-6 lg:p-8 font-sans">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-4xl font-bold text-gray-800">{{ currentPage() === 'documents' ? 'Document Track' : 'Edit Plan Task' }}</h1>
+      <div class="relative">
+        <button #navButton (click)="toggleNavDropdown()" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-700">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+        <div #navDropdown class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-30 border border-gray-200 origin-top-right transition-all duration-200 ease-out"
+             [class.opacity-100]="activeNavDropdown()"
+             [class.scale-100]="activeNavDropdown()"
+             [class.opacity-0]="!activeNavDropdown()"
+             [class.scale-95]="!activeNavDropdown()"
+             [class.invisible]="!activeNavDropdown()">
+          <ul class="py-1">
+            <li>
+              <button (click)="navigateTo('documents')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors" [class.bg-gray-100]="currentPage() === 'documents'">
+                Document Track
+              </button>
+            </li>
+            <li>
+              <button (click)="navigateTo('plan-task')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors" [class.bg-gray-100]="currentPage() === 'plan-task'">
+                Plan Task Editor
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    @if (currentPage() === 'documents') {
+      <main>
+        <!-- Filters -->
+        <div class="mb-4">
+          <div class="flex flex-wrap items-end gap-4">
+            <!-- Term Filter -->
+            <div class="relative w-full sm:w-auto sm:flex-1 md:max-w-xs">
+              <label for="term-filter-button" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900 z-10">Term</label>
+              <div class="relative">
+                <button #termFilterButton id="term-filter-button" (click)="toggleDropdown('term')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                  <span class="truncate">{{ termButtonText() }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <div #termFilterDropdown class="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out"
+                     [class.opacity-100]="activeDropdown() === 'term'"
+                     [class.scale-100]="activeDropdown() === 'term'"
+                     [class.opacity-0]="activeDropdown() !== 'term'"
+                     [class.scale-95]="activeDropdown() !== 'term'"
+                     [class.invisible]="activeDropdown() !== 'term'">
+                  <app-term-filter-dropdown
+                    selectionMode="multi"
+                    [selected]="selectedTerms()"
+                    (selectionChange)="onTermSelectionChange($event)">
+                  </app-term-filter-dropdown>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Keyword Search -->
+            <div class="flex-grow">
+              <input id="keyword-search" type="text" (input)="onKeywordSearch($event)" placeholder="Looking for something..." class="block w-full pl-3 pr-10 py-3 text-base border border-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white text-gray-900">
+            </div>
+
+            <!-- Filter/Column Buttons -->
+            <div class="relative">
+              <button (click)="toggleAdvancedFilters()" class="relative flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                @if(activeFilterCount() > 0) {
+                  <span class="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-pink-600 text-white rounded-full text-xs">{{ activeFilterCount() }}</span>
+                }
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2 text-gray-500">
+                  <path fill-rule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 0 1 .628.74v2.288a2.25 2.25 0 0 1-.659 1.59l-4.682 4.683a2.25 2.25 0 0 0-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 0 1 8 18.25v-5.757a2.25 2.25 0 0 0-.659-1.59L2.659 6.22A2.25 2.25 0 0 1 2 4.629V2.34a.75.75 0 0 1 .628-.74Z" clip-rule="evenodd" />
+                </svg>
+                Filters
+              </button>
+            </div>
+            <div class="relative">
+              <button #columnsButton (click)="toggleDropdown('columns')" class="flex items-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 mr-2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                </svg>
+                Columns
+              </button>
+              <div #columnsDropdown class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-right transition-all duration-200 ease-out"
+                  [class.opacity-100]="activeDropdown() === 'columns'"
+                  [class.scale-100]="activeDropdown() === 'columns'"
+                  [class.opacity-0]="activeDropdown() !== 'columns'"
+                  [class.scale-95]="activeDropdown() !== 'columns'"
+                  [class.invisible]="activeDropdown() !== 'columns'">
+                <ul class="py-1">
+                  @for(col of columnDefs; track col.key) {
+                    <li>
+                      <label class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors">
+                        <input type="checkbox" class="sr-only" [checked]="visibleColumns()[col.key]" (change)="toggleColumnVisibility(col.key)">
+                        <div class="w-5 h-5 mr-3 flex items-center justify-center border-2 rounded" [class]="visibleColumns()[col.key] ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-400'">
+                          @if(visibleColumns()[col.key]) {
+                              <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                          }
+                        </div>
+                        <span>{{ col.label }}</span>
+                      </label>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Advanced Filters (collapsible) -->
+          <div class="transition-all duration-300 ease-in-out" 
+              [class.max-h-96]="showAdvancedFilters()" 
+              [class.max-h-0]="!showAdvancedFilters()" 
+              [class.opacity-100]="showAdvancedFilters()"
+              [class.opacity-0]="!showAdvancedFilters()"
+              [class.pt-4]="showAdvancedFilters()">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Status Filter -->
+                <div class="relative">
+                  <button #statusFilterButton (click)="toggleDropdown('status')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                    <span class="truncate">{{ statusButtonText() }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <div #statusFilterDropdown class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left transition-all duration-200 ease-out"
+                      [class.opacity-100]="activeDropdown() === 'status'"
+                      [class.scale-100]="activeDropdown() === 'status'"
+                      [class.opacity-0]="activeDropdown() !== 'status'"
+                      [class.scale-95]="activeDropdown() !== 'status'"
+                      [class.invisible]="activeDropdown() !== 'status'">
+                    <ul class="py-1">
+                      @for(option of statusOptions; track option) {
+                        <li>
+                          <label class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors">
+                            <input type="checkbox" class="sr-only" [checked]="statusFilter().includes(option)" (change)="toggleStatusFilter(option)">
+                            <div class="w-5 h-5 mr-3 flex items-center justify-center border-2 rounded" [class]="statusFilter().includes(option) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-400'">
+                              @if(statusFilter().includes(option)) {
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                              }
+                            </div>
+                            <span>{{ option }}</span>
+                          </label>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              <!-- Doc Type Filter -->
+                <div class="relative">
+                  <button #docTypeFilterButton (click)="toggleDropdown('docType')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                    <span class="truncate capitalize">{{ docTypeButtonText() }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <div #docTypeFilterDropdown class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left transition-all duration-200 ease-out"
+                      [class.opacity-100]="activeDropdown() === 'docType'"
+                      [class.scale-100]="activeDropdown() === 'docType'"
+                      [class.opacity-0]="activeDropdown() !== 'docType'"
+                      [class.scale-95]="activeDropdown() !== 'docType'"
+                      [class.invisible]="activeDropdown() !== 'docType'">
+                    <ul class="py-1">
+                      @for(option of docTypeOptions; track option) {
+                        <li>
+                          <label class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer capitalize transition-colors">
+                            <input type="checkbox" class="sr-only" [checked]="docTypeFilter().includes(option)" (change)="toggleDocTypeFilter(option)">
+                            <div class="w-5 h-5 mr-3 flex items-center justify-center border-2 rounded" [class]="docTypeFilter().includes(option) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-400'">
+                              @if(docTypeFilter().includes(option)) {
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                              }
+                            </div>
+                            <span>{{ option }}</span>
+                          </label>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              <!-- Published Filter -->
+                <div class="relative">
+                  <button #publishedFilterButton (click)="toggleDropdown('published')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                    <span class="truncate">{{ publishedButtonText() }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <div #publishedFilterDropdown class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left transition-all duration-200 ease-out"
+                      [class.opacity-100]="activeDropdown() === 'published'"
+                      [class.scale-100]="activeDropdown() === 'published'"
+                      [class.opacity-0]="activeDropdown() !== 'published'"
+                      [class.scale-95]="activeDropdown() !== 'published'"
+                      [class.invisible]="activeDropdown() !== 'published'">
+                    <ul class="py-1">
+                      @for(option of publishedOptions; track option) {
+                        <li>
+                          <label class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors">
+                            <input type="checkbox" class="sr-only" [checked]="publishedFilter().includes(option)" (change)="togglePublishedFilter(option)">
+                            <div class="w-5 h-5 mr-3 flex items-center justify-center border-2 rounded" [class]="publishedFilter().includes(option) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-400'">
+                              @if(publishedFilter().includes(option)) {
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                              }
+                            </div>
+                            <span>{{ option }}</span>
+                          </label>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              <!-- Subject Filter -->
+                <div class="relative">
+                  <button #subjectFilterButton (click)="toggleDropdown('subject')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                    <span class="truncate capitalize flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-gray-500">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                      </svg>
+                      {{ subjectFilter() || 'Subject' }}
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <div #subjectFilterDropdown class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out"
+                      [class.opacity-100]="activeDropdown() === 'subject'"
+                      [class.scale-100]="activeDropdown() === 'subject'"
+                      [class.opacity-0]="activeDropdown() !== 'subject'"
+                      [class.scale-95]="activeDropdown() !== 'subject'"
+                      [class.invisible]="activeDropdown() !== 'subject'">
+                    <div class="p-2 border-b border-gray-200" (click)="$event.stopPropagation()">
+                      <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd" /></svg>
+                        </span>
+                        <input type="text" placeholder="Search subjects..." class="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="subjectSearchQuery()" (input)="onSubjectSearch($event)">
+                      </div>
+                    </div>
+                    <ul class="py-1 max-h-60 overflow-y-auto">
+                      <li><button (click)="selectSubject('')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">All Subjects</button></li>
+                      @for(subject of filteredSubjects(); track subject) {
+                        <li><button (click)="selectSubject(subject)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ subject }}</button></li>
+                      } @empty {
+                        <li><span class="block px-4 py-2 text-sm text-gray-500">No subjects found.</span></li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              <!-- Organization Filter -->
+                <div class="relative">
+                  <button #organizationFilterButton (click)="toggleDropdown('organization')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                    <span class="truncate flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-gray-500">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+                        </svg>
+                      {{ organizationFilter() || 'Organization' }}
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <div #organizationFilterDropdown class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out"
+                      [class.opacity-100]="activeDropdown() === 'organization'"
+                      [class.scale-100]="activeDropdown() === 'organization'"
+                      [class.opacity-0]="activeDropdown() !== 'organization'"
+                      [class.scale-95]="activeDropdown() !== 'organization'"
+                      [class.invisible]="activeDropdown() !== 'organization'">
+                    <div class="p-2 border-b border-gray-200" (click)="$event.stopPropagation()">
+                      <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd" /></svg>
+                        </span>
+                        <input type="text" placeholder="Search organizations..." class="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="organizationSearchQuery()" (input)="onOrganizationSearch($event)">
+                      </div>
+                    </div>
+                    <ul class="py-1 max-h-60 overflow-y-auto">
+                      <li><button (click)="selectOrganization('')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">All Organizations</button></li>
+                      @for(org of filteredFlatOrganizationHierarchy(); track org.name) {
+                        <li>
+                          <button (click)="selectOrganization(org.name)" 
+                                  class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                  [style.padding-left]="(1 + org.level * 1.5) + 'rem'">
+                            {{ org.name }}
+                          </button>
+                        </li>
+                      } @empty {
+                        <li><span class="block px-4 py-2 text-sm text-gray-500">No organizations found.</span></li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              <!-- Instructor Filter -->
+              <div>
+                <input id="instructor-filter" type="text" (input)="onInstructorFilter($event)" placeholder="Instructor" class="w-full py-3 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900">
+              </div>
+            </div>
+          </div>
+          
+          <p class="inline-block mt-4 text-sm text-pink-600">Don't see the document you're looking for?</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-end items-center mb-4">
+          <div class="flex items-center space-x-4 text-sm text-gray-600">
+            <span>Items per page {{ itemsPerPage() }}</span>
+            <span>{{ (paginationCurrentPage() - 1) * itemsPerPage() + 1 }} - {{ (paginationCurrentPage() * itemsPerPage()) > filteredDocuments().length ? filteredDocuments().length : (paginationCurrentPage() * itemsPerPage()) }} of {{ filteredDocuments().length }}</span>
+            <div class="flex items-center">
+              <button (click)="prevPage()" [disabled]="paginationCurrentPage() === 1" class="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <button (click)="nextPage()" [disabled]="paginationCurrentPage() === totalPages()" class="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents Table -->
+        <div class="bg-white shadow-lg rounded-lg border border-gray-200">
+          <table class="w-full text-sm text-left text-gray-600">
+              <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 w-40"></th>
+                  @if (visibleColumns().term) { 
+                    <th scope="col" class="px-6 py-3">
+                      <button (click)="onSort('term')" class="flex items-center space-x-1 group">
+                        <span class="group-hover:text-gray-900">Term</span>
+                        <span class="flex flex-col">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 -mb-1.5" [class]="sortConfig()?.key === 'term' && sortConfig()?.direction === 'asc' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'">
+                            <path fill-rule="evenodd" d="M14.77 12.79a.75.75 0 0 1-1.06 0L10 9.06l-3.71 3.73a.75.75 0 1 1-1.06-1.06l4.25-4.25a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                          </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4" [class]="sortConfig()?.key === 'term' && sortConfig()?.direction === 'desc' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06 0L10 10.94l3.71-3.73a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.23 8.27a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                          </svg>
+                        </span>
+                      </button>
+                    </th>
+                  }
+                  @if (visibleColumns().name) { 
+                    <th scope="col" class="px-6 py-3">
+                      <button (click)="onSort('name')" class="flex items-center space-x-1 group">
+                        <span class="group-hover:text-gray-900">Name</span>
+                        <span class="flex flex-col">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 -mb-1.5" [class]="sortConfig()?.key === 'name' && sortConfig()?.direction === 'asc' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'">
+                            <path fill-rule="evenodd" d="M14.77 12.79a.75.75 0 0 1-1.06 0L10 9.06l-3.71 3.73a.75.75 0 1 1-1.06-1.06l4.25-4.25a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                          </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4" [class]="sortConfig()?.key === 'name' && sortConfig()?.direction === 'desc' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06 0L10 10.94l3.71-3.73a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.23 8.27a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                          </svg>
+                        </span>
+                      </button>
+                    </th>
+                  }
+                  @if (visibleColumns().status) { 
+                    <th scope="col" class="px-6 py-3">
+                      <button (click)="onSort('status')" class="flex items-center space-x-1 group">
+                        <span class="group-hover:text-gray-900">Status</span>
+                        <span class="flex flex-col">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 -mb-1.5" [class]="sortConfig()?.key === 'status' && sortConfig()?.direction === 'asc' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'">
+                            <path fill-rule="evenodd" d="M14.77 12.79a.75.75 0 0 1-1.06 0L10 9.06l-3.71 3.73a.75.75 0 1 1-1.06-1.06l4.25-4.25a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                          </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4" [class]="sortConfig()?.key === 'status' && sortConfig()?.direction === 'desc' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06 0L10 10.94l3.71-3.73a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.23 8.27a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                          </svg>
+                        </span>
+                      </button>
+                    </th>
+                  }
+                  @if (visibleColumns().editors) { 
+                    <th scope="col" class="px-6 py-3">
+                      <button (click)="onSort('editors')" class="flex items-center space-x-1 group">
+                        <span class="group-hover:text-gray-900">Editors</span>
+                        <span class="flex flex-col">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 -mb-1.5" [class]="sortConfig()?.key === 'editors' && sortConfig()?.direction === 'asc' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'">
+                            <path fill-rule="evenodd" d="M14.77 12.79a.75.75 0 0 1-1.06 0L10 9.06l-3.71 3.73a.75.75 0 1 1-1.06-1.06l4.25-4.25a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                          </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4" [class]="sortConfig()?.key === 'editors' && sortConfig()?.direction === 'desc' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06 0L10 10.94l3.71-3.73a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.23 8.27a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                          </svg>
+                        </span>
+                      </button>
+                    </th>
+                  }
+                  @if (visibleColumns().type) { 
+                    <th scope="col" class="px-6 py-3">
+                      <button (click)="onSort('type')" class="flex items-center space-x-1 group">
+                        <span class="group-hover:text-gray-900">Type</span>
+                        <span class="flex flex-col">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 -mb-1.5" [class]="sortConfig()?.key === 'type' && sortConfig()?.direction === 'asc' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'">
+                            <path fill-rule="evenodd" d="M14.77 12.79a.75.75 0 0 1-1.06 0L10 9.06l-3.71 3.73a.75.75 0 1 1-1.06-1.06l4.25-4.25a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                          </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4" [class]="sortConfig()?.key === 'type' && sortConfig()?.direction === 'desc' ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06 0L10 10.94l3.71-3.73a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.23 8.27a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                          </svg>
+                        </span>
+                      </button>
+                    </th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (doc of paginatedDocuments(); track doc.id) {
+                  <tr class="bg-white border-b hover:bg-gray-50 transition-colors duration-200">
+                    <td class="px-6 py-4">
+                      <div class="relative inline-flex rounded shadow-sm action-dropdown-container">
+                        <button (click)="editDocument(doc)" class="w-16 text-center bg-pink-600 text-white text-xs font-medium px-3 py-1.5 rounded-l hover:bg-pink-700 focus:z-10 focus:ring-2 focus:ring-pink-500 transition-colors">
+                          {{ doc.status === 'Awaiting Approval' ? 'Review' : 'Edit' }}
+                        </button>
+                        <button (click)="toggleActionDropdown($event, doc.id)" class="bg-pink-600 text-white px-1 py-1.5 rounded-r border-l border-pink-500 hover:bg-pink-700 focus:z-10 focus:ring-2 focus:ring-pink-500 transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06z" clip-rule="evenodd" />
+                          </svg>
+                        </button>
+                        <div class="absolute top-full left-0 mt-2 w-32 bg-white rounded-md shadow-lg z-10 border border-gray-200 origin-top-left transition-all duration-200 ease-out"
+                            [class.opacity-100]="actionDropdownOpen() === doc.id"
+                            [class.scale-100]="actionDropdownOpen() === doc.id"
+                            [class.opacity-0]="actionDropdownOpen() !== doc.id"
+                            [class.scale-95]="actionDropdownOpen() !== doc.id"
+                            [class.invisible]="actionDropdownOpen() !== doc.id">
+                          <ul class="py-1">
+                            <li>
+                              <button (click)="toggleActivation(doc)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                                {{ doc.status === 'Inactive' ? 'Activate' : 'Deactivate' }}
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </td>
+                    @if (visibleColumns().term) { <td class="px-6 py-4 font-medium text-gray-900">{{ doc.term }}</td> }
+                    @if (visibleColumns().name) { <td class="px-6 py-4">{{ doc.name }}</td> }
+                    @if (visibleColumns().status) { 
+                      <td class="px-6 py-4">
+                        <span class="underline cursor-pointer flex items-center" [class]="{ 
+                          'text-green-600': doc.status === 'Completed', 
+                          'text-yellow-600': doc.status === 'Awaiting Approval',
+                          'text-blue-600': doc.status === 'In progress', 
+                          'text-red-600': doc.status === 'Not Started',
+                          'text-gray-500': doc.status === 'Inactive'
+                        }">
+                          {{ doc.status }}
+                          @if(doc.status === 'Completed') {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5z" clip-rule="evenodd" />
+                            </svg>
+                          }
+                        </span>
+                      </td>
+                    }
+                    @if (visibleColumns().editors) { 
+                      <td class="px-6 py-4">
+                        <div class="flex items-center space-x-2">
+                          @for (editor of doc.editors; track editor.name) {
+                            <div class="flex items-center">
+                              <div class="h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs" [class]="getAvatarColor(editor.name)" [title]="editor.name">
+                                {{ getInitials(editor.name) }}
+                              </div>
+                              <span class="ml-2">{{ editor.name }}</span>
+                            </div>
+                          }
+                        </div>
+                      </td>
+                    }
+                    @if (visibleColumns().type) { <td class="px-6 py-4 capitalize">{{ doc.type }}</td> }
+                  </tr>
+                } @empty {
+                  <tr class="bg-white border-b">
+                    <td [attr.colspan]="visibleColumnCount() + 1" class="px-6 py-12 text-center text-gray-500">
+                      <div class="flex flex-col items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6.75A2.25 2.25 0 0 1 4.5 4.5h15A2.25 2.25 0 0 1 21.75 6.75v3.026m-16.5 0h16.5" />
+                        </svg>
+                        <p class="mt-2 font-semibold">No documents found</p>
+                        <p class="text-sm">Try adjusting your search or filter criteria.</p>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+        </div>
+      </main>
+    }
+    @if(currentPage() === 'plan-task') {
+      <app-plan-task-editor></app-plan-task-editor>
+    }
+  </div>
+</div>
+
+<!-- Edit Modal -->
+@if(editingDocument(); as doc) {
+  <app-edit-modal [document]="doc" (close)="closeModal()" (save)="saveDocument($event)"></app-edit-modal>
+}

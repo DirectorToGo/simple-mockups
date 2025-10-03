@@ -1,0 +1,5 @@
+{
+  "name": "Document Track",
+  "description": "A proof-of-concept application for tracking syllabus documents with advanced filtering and editing capabilities, designed to replicate and improve upon the Simple Syllabus interface.",
+  "requestFramePermissions": []
+}
