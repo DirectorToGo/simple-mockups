@@ -32,3 +32,4 @@ This repository is ready to publish to GitHub Pages at `https://DirectorToGo.git
 
 To trigger a manual deployment at any time, go to the **Actions** tab, open **Deploy to GitHub Pages**, and use **Run workflow**.
 # simple-mockups
+# simple-mockups
