@@ -1,4 +1,4 @@
-# Simple Mockups
+# Document Mockup Studio
 
 A modern Angular application for creating and managing document mockups with AI-powered features.
 
