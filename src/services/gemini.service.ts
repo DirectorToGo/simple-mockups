@@ -185,4 +185,87 @@ User prompt: "The syllabus must have the 'Instructor Information' component, and
     const jsonString = response.text();
     return JSON.parse(jsonString) as AiResult;
   }
+
+  async generateSimpleTaReply(userPrompt: string, courseContext: string): Promise<string> {
+    if (!this.ai) {
+      throw new Error('AI is not configured.');
+    }
+
+    const systemInstruction = `You are "Simple TA", a helpful assistant for a single student. Use the provided course and syllabus context to answer questions about due dates, grading, topics, and objectives. If details are not present in the context, say so briefly and provide a concise, general answer.`;
+
+    const model = this.ai.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction,
+    });
+
+    const request: GenerateContentRequest = {
+      contents: [{
+        role: 'user',
+        parts: [{
+          text: `Context (course + syllabus):\n${courseContext}\n\nStudent question:\n${userPrompt}\n\nAnswer concisely (2-4 sentences).`
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.3,
+      }
+    };
+
+    const result = await model.generateContent(request);
+    return result.response.text();
+  }
+
+  // Best-effort streaming; falls back to non-streaming if unsupported
+  async generateSimpleTaReplyStream(
+    userPrompt: string,
+    courseContext: string,
+    onChunk: (text: string) => void
+  ): Promise<string> {
+    if (!this.ai) {
+      throw new Error('AI is not configured.');
+    }
+
+    const systemInstruction = `You are "Simple TA", a helpful assistant for a single student. Use the provided course and syllabus context to answer questions about due dates, grading, topics, and objectives. If details are not present in the context, say so briefly and provide a concise, general answer.`;
+
+    const model = this.ai.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction,
+    });
+
+    const request: GenerateContentRequest = {
+      contents: [{
+        role: 'user',
+        parts: [{ text: `Context (course + syllabus):\n${courseContext}\n\nStudent question:\n${userPrompt}` }]
+      }],
+      generationConfig: { temperature: 0.3 },
+    };
+
+    try {
+      // @ts-ignore: generateContentStream is available in recent SDK versions
+      const result = await (model as any).generateContentStream(request);
+      let full = '';
+      // Some SDKs expose an async iterator: result.stream
+      if (result && result.stream && Symbol.asyncIterator in result.stream) {
+        for await (const item of result.stream as any) {
+          const text = (item?.text ? item.text() : item?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('')) || '';
+          if (text) {
+            full += text;
+            onChunk(text);
+          }
+        }
+        return full;
+      }
+      // Fallback: attempt to read aggregated text
+      const agg = result?.response?.text?.() ?? '';
+      if (agg) {
+        onChunk(agg);
+        return agg;
+      }
+    } catch {
+      // ignore and fall back
+    }
+
+    const fallback = await this.generateSimpleTaReply(userPrompt, courseContext);
+    onChunk(fallback);
+    return fallback;
+  }
 }

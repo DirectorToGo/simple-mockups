@@ -19,8 +19,12 @@ export type SyllabusComponentName =
   | 'Course Objective'
   | 'Student engagement (syllabus)';
 
+export type SyllabusComponentType = 'Instructor' | 'Materials' | 'Content' | 'Objectives' | 'Schedule';
+
 export interface SyllabusComponent {
   name: SyllabusComponentName;
+  type: SyllabusComponentType;
+  content: string; // text-based, editable content simulating real syllabus content
   visible: boolean;
 }
 

@@ -4,31 +4,54 @@
       <div class="flex items-center">
         <div class="h-8 w-8 rounded-lg bg-pink-600 flex items-center justify-center text-white font-semibold text-base">S</div>
       </div>
-      <div class="relative">
-        <button #profileButton type="button" (click)="toggleProfileDropdown()" class="relative flex items-center justify-center h-9 w-9 rounded-full bg-gray-200 text-gray-600 hover:text-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-1 focus:ring-offset-white">
-          <span class="sr-only">Open profile</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a7.5 7.5 0 0 1 15 0" />
-          </svg>
-        </button>
-        <div #profileDropdown class="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-right transition-all duration-200 ease-out"
-             [class.opacity-100]="profileDropdownOpen()"
-             [class.scale-100]="profileDropdownOpen()"
-             [class.opacity-0]="!profileDropdownOpen()"
-             [class.scale-95]="!profileDropdownOpen()"
-             [class.invisible]="!profileDropdownOpen()">
-          <ul class="py-1">
-            <li>
-              <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Admin</button>
-            </li>
-            <li>
-              <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Instructor</button>
-            </li>
-            <li>
-              <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Student</button>
-            </li>
-          </ul>
+      <div class="flex items-center gap-2">
+        @if (currentUserName() === 'Andrew Admin') {
+        <div class="relative">
+          <button #settingsButton type="button" (click)="toggleSiteSettingsDropdown()" class="relative flex items-center justify-center h-9 w-9 rounded-full bg-gray-200 text-gray-600 hover:text-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-1 focus:ring-offset-white">
+            <span class="sr-only">Open site settings</span>
+            <span class="material-symbols-outlined text-[20px] leading-none">settings</span>
+          </button>
+          <div #settingsDropdown class="absolute right-0 top-full mt-2 w-56 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-right transition-all duration-200 ease-out"
+               [class.opacity-100]="siteSettingsDropdownOpen()"
+               [class.scale-100]="siteSettingsDropdownOpen()"
+               [class.opacity-0]="!siteSettingsDropdownOpen()"
+               [class.scale-95]="!siteSettingsDropdownOpen()"
+               [class.invisible]="!siteSettingsDropdownOpen()">
+            <div class="px-4 py-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Site Settings</div>
+            <ul class="py-1">
+              <li>
+                <button type="button" (click)="openAccounts()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Accounts</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+        }
+
+        <div class="relative">
+          <button #profileButton type="button" (click)="toggleProfileDropdown()" class="relative flex items-center justify-center h-9 w-9 rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-1 focus:ring-offset-white" [title]="currentUserName()">
+            <span class="sr-only">Open profile</span>
+            <span class="h-7 w-7 rounded-full bg-pink-600 text-white flex items-center justify-center text-[10px] font-bold">
+              {{ getInitials(currentUserName()) }}
+            </span>
+          </button>
+          <div #profileDropdown class="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-right transition-all duration-200 ease-out"
+               [class.opacity-100]="profileDropdownOpen()"
+               [class.scale-100]="profileDropdownOpen()"
+               [class.opacity-0]="!profileDropdownOpen()"
+               [class.scale-95]="!profileDropdownOpen()"
+               [class.invisible]="!profileDropdownOpen()">
+            <ul class="py-1">
+              <li>
+                <button type="button" (click)="switchToDesigner()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Admin (Andrew Admin)</button>
+              </li>
+              <li>
+                <button type="button" (click)="switchToInstructor()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Instructor (Fred Faculty)</button>
+              </li>
+              <li>
+                <button type="button" (click)="switchToStudent()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Student (Alice Student)</button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -43,34 +66,39 @@
       <div class="h-full flex flex-col">
         <nav id="sidebar-navigation" class="flex-1 py-3 px-3 space-y-1.5" aria-label="Primary">
           @for (navItem of navItems; track navItem.page) {
-            <button
-              type="button"
-              (click)="navigateTo(navItem.page)"
-              class="flex items-center gap-2 w-full px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-1 focus:ring-offset-white"
-              [ngClass]="{
-                'bg-pink-50 text-pink-600 hover:bg-pink-100': currentPage() === navItem.page,
-                'text-gray-600 hover:bg-gray-100': currentPage() !== navItem.page
-              }"
-              [class.justify-center]="!sidebarExpanded()"
-              [attr.aria-current]="currentPage() === navItem.page ? 'page' : null"
-              [attr.aria-label]="navItem.label"
-              [attr.title]="navItem.label">
-              <span class="flex items-center justify-center h-8 w-8 rounded-md bg-gray-100 text-gray-600 transition-colors"
-                    [class.bg-pink-100]="currentPage() === navItem.page"
-                    [class.text-pink-600]="currentPage() === navItem.page">
-                @switch (navItem.icon) {
-                  @case ('documents') {
-                    <span class="material-symbols-outlined text-[20px] leading-none">article</span>
+            @if ((navItem.page !== 'plan-admin' || canSeePlanAdmin()) && (navItem.page !== 'simple-ta' || canSeeSimpleTA())) {
+              <button
+                type="button"
+                (click)="navigateTo(navItem.page)"
+                class="flex items-center gap-2 w-full px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-1 focus:ring-offset-white"
+                [ngClass]="{
+                  'bg-pink-50 text-pink-600 hover:bg-pink-100': currentPage() === navItem.page,
+                  'text-gray-600 hover:bg-gray-100': currentPage() !== navItem.page
+                }"
+                [class.justify-center]="!sidebarExpanded()"
+                [attr.aria-current]="currentPage() === navItem.page ? 'page' : null"
+                [attr.aria-label]="navItem.label"
+                [attr.title]="navItem.label">
+                <span class="flex items-center justify-center h-8 w-8 rounded-md bg-gray-100 text-gray-600 transition-colors"
+                      [class.bg-pink-100]="currentPage() === navItem.page"
+                      [class.text-pink-600]="currentPage() === navItem.page">
+                  @switch (navItem.icon) {
+                    @case ('documents') {
+                      <span class="material-symbols-outlined text-[20px] leading-none">article</span>
+                    }
+                    @case ('plan') {
+                      <span class="material-symbols-outlined text-[20px] leading-none">tactic</span>
+                    }
+                    @case ('chat') {
+                      <span class="material-symbols-outlined text-[20px] leading-none">smart_toy</span>
+                    }
                   }
-                  @case ('plan') {
-                    <span class="material-symbols-outlined text-[20px] leading-none">tactic</span>
-                  }
+                </span>
+                @if (sidebarExpanded()) {
+                  <span class="truncate">{{ navItem.label }}</span>
                 }
-              </span>
-              @if (sidebarExpanded()) {
-                <span class="truncate">{{ navItem.label }}</span>
-              }
-            </button>
+              </button>
+            }
           }
         </nav>
       </div>
@@ -79,7 +107,10 @@
       <div class="px-3 sm:px-4 lg:px-6 py-5">
         <div class="max-w-7xl mx-auto">
           @if (currentPage() === 'documents') {
-            <h1 class="text-2xl font-semibold text-gray-900 mb-4">Document Track</h1>
+            <h1 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">Document Track
+              @if (currentUserRole() === 'instructor') { <span class="ml-2 inline-flex items-center px-2 py-0.5 text-[11px] rounded-full bg-yellow-100 text-yellow-800">Viewing as {{ currentUserName() }} (Instructor)</span> }
+              @else if (currentUserRole() === 'student') { <span class="ml-2 inline-flex items-center px-2 py-0.5 text-[11px] rounded-full bg-blue-100 text-blue-800">Viewing as {{ currentUserName() }} (Read-only)</span> }
+            </h1>
             <section class="space-y-4">
         <!-- Filters -->
         <div class="mb-3">
@@ -108,7 +139,7 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- Keyword Search -->
             <div class="flex-grow">
               <input id="keyword-search" type="text" (input)="onKeywordSearch($event)" placeholder="Looking for something..." class="block w-full pl-3 pr-9 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white text-gray-900">
@@ -153,11 +184,11 @@
               </div>
             </button>
           </div>
-          
+
           <!-- Advanced Filters (collapsible) -->
-          <div class="transition-all duration-300 ease-in-out" 
-              [class.max-h-80]="showAdvancedFilters()" 
-              [class.max-h-0]="!showAdvancedFilters()" 
+          <div class="transition-all duration-300 ease-in-out"
+              [class.max-h-80]="showAdvancedFilters()"
+              [class.max-h-0]="!showAdvancedFilters()"
               [class.opacity-100]="showAdvancedFilters()"
               [class.opacity-0]="!showAdvancedFilters()"
               [class.pt-3]="showAdvancedFilters()">
@@ -313,7 +344,7 @@
                       <li><button (click)="selectOrganization('')" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">All Organizations</button></li>
                       @for(org of filteredFlatOrganizationHierarchy(); track org.name) {
                         <li>
-                          <button (click)="selectOrganization(org.name)" 
+                          <button (click)="selectOrganization(org.name)"
                                   class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
                                   [style.padding-left]="(0.75 + org.level * 1.2) + 'rem'">
                             {{ org.name }}
@@ -331,12 +362,7 @@
               </div>
             </div>
           </div>
-          
-          <p class="mt-3 text-xs">
-            <a href="#" class="text-pink-600 hover:text-pink-700 underline" (click)="$event.preventDefault()">
-              Don't see the document you're looking for?
-            </a>
-          </p>
+
         </div>
 
         <!-- Pagination -->
@@ -365,7 +391,7 @@
               <thead class="text-[11px] text-gray-700 bg-gray-50">
                 <tr>
                   <th scope="col" class="px-4 py-2 w-32"></th>
-                  @if (visibleColumns().term) { 
+                  @if (visibleColumns().term) {
                     <th scope="col" class="px-4 py-2">
                       <button (click)="onSort('term')" class="flex items-center space-x-1 group">
                         <span class="group-hover:text-gray-900">Term</span>
@@ -380,7 +406,7 @@
                       </button>
                     </th>
                   }
-                  @if (visibleColumns().name) { 
+                  @if (visibleColumns().name) {
                     <th scope="col" class="px-4 py-2">
                       <button (click)="onSort('name')" class="flex items-center space-x-1 group">
                         <span class="group-hover:text-gray-900">Name</span>
@@ -395,7 +421,7 @@
                       </button>
                     </th>
                   }
-                  @if (visibleColumns().status) { 
+                  @if (visibleColumns().status) {
                     <th scope="col" class="px-4 py-2">
                       <button (click)="onSort('status')" class="flex items-center space-x-1 group">
                         <span class="group-hover:text-gray-900">Status</span>
@@ -410,7 +436,7 @@
                       </button>
                     </th>
                   }
-                  @if (visibleColumns().editors) { 
+                  @if (visibleColumns().editors) {
                     <th scope="col" class="px-4 py-2">
                       <button (click)="onSort('editors')" class="flex items-center space-x-1 group">
                         <span class="group-hover:text-gray-900">Editors</span>
@@ -425,7 +451,7 @@
                       </button>
                     </th>
                   }
-                  @if (visibleColumns().type) { 
+                  @if (visibleColumns().type) {
                     <th scope="col" class="px-4 py-2">
                       <button (click)="onSort('type')" class="flex items-center space-x-1 group">
                         <span class="group-hover:text-gray-900">Type</span>
@@ -445,35 +471,41 @@
               <tbody>
                 @for (doc of paginatedDocuments(); track doc.id) {
                   <tr class="bg-white border-b hover:bg-gray-50 transition-colors duration-200">
-                    <td class="px-4 py-3">
-                      <div class="relative inline-flex rounded shadow-sm action-dropdown-container">
-                        <button (click)="editDocument(doc)" class="w-14 text-center bg-pink-600 text-white text-xs font-medium px-2.5 py-1.5 rounded-l hover:bg-pink-700 focus:z-10 focus:ring-2 focus:ring-pink-500 transition-colors">
-                          {{ doc.status === 'Awaiting Approval' ? 'Review' : 'Edit' }}
-                        </button>
-                        <button (click)="toggleActionDropdown($event, doc.id)" class="bg-pink-600 text-white px-1 py-1.5 rounded-r border-l border-pink-500 hover:bg-pink-700 focus:z-10 focus:ring-2 focus:ring-pink-500 transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06z" clip-rule="evenodd" />
-                          </svg>
-                        </button>
-                        <div class="absolute top-full left-0 mt-2 w-32 bg-white rounded-md shadow-lg z-10 border border-gray-200 origin-top-left transition-all duration-200 ease-out"
-                            [class.opacity-100]="actionDropdownOpen() === doc.id"
-                            [class.scale-100]="actionDropdownOpen() === doc.id"
-                            [class.opacity-0]="actionDropdownOpen() !== doc.id"
-                            [class.scale-95]="actionDropdownOpen() !== doc.id"
-                            [class.invisible]="actionDropdownOpen() !== doc.id">
-                          <ul class="py-1">
-                            <li>
-                              <button (click)="toggleActivation(doc)" class="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors">
-                                {{ doc.status === 'Inactive' ? 'Activate' : 'Deactivate' }}
-                              </button>
-                            </li>
-                          </ul>
+                    @if (canEdit()) {
+                      <td class="px-4 py-3">
+                        <div class="relative inline-flex rounded shadow-sm action-dropdown-container">
+                          <button (click)="editDocument(doc)" class="w-14 text-center bg-pink-600 text-white text-xs font-medium px-2.5 py-1.5 rounded-l hover:bg-pink-700 focus:z-10 focus:ring-2 focus:ring-pink-500 transition-colors">
+                            {{ doc.status === 'Awaiting Approval' ? 'Review' : 'Edit' }}
+                          </button>
+                          <button (click)="toggleActionDropdown($event, doc.id)" class="bg-pink-600 text-white px-1 py-1.5 rounded-r border-l border-pink-500 hover:bg-pink-700 focus:z-10 focus:ring-2 focus:ring-pink-500 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06z" clip-rule="evenodd" />
+                            </svg>
+                          </button>
+                          <div class="absolute top-full left-0 mt-2 w-32 bg-white rounded-md shadow-lg z-10 border border-gray-200 origin-top-left transition-all duration-200 ease-out"
+                              [class.opacity-100]="actionDropdownOpen() === doc.id"
+                              [class.scale-100]="actionDropdownOpen() === doc.id"
+                              [class.opacity-0]="actionDropdownOpen() !== doc.id"
+                              [class.scale-95]="actionDropdownOpen() !== doc.id"
+                              [class.invisible]="actionDropdownOpen() !== doc.id">
+                            <ul class="py-1">
+                              <li>
+                                <button (click)="toggleActivation(doc)" class="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors">
+                                  {{ doc.status === 'Inactive' ? 'Activate' : 'Deactivate' }}
+                                </button>
+                              </li>
+                            </ul>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
+                    } @else {
+                      <td class="px-4 py-3">
+                        <button (click)="editDocument(doc)" class="w-16 text-center bg-gray-200 text-gray-700 text-xs font-medium px-2.5 py-1.5 rounded hover:bg-gray-300">View</button>
+                      </td>
+                    }
                     @if (visibleColumns().term) { <td class="px-4 py-3 font-medium text-gray-900">{{ doc.term }}</td> }
                     @if (visibleColumns().name) { <td class="px-4 py-3">{{ doc.name }}</td> }
-                    @if (visibleColumns().status) { 
+                    @if (visibleColumns().status) {
                       <td class="px-4 py-3">
                         <span class="underline cursor-pointer flex items-center" [class]="{
                           'text-pink-600': doc.status === 'Completed' || doc.status === 'Awaiting Approval' || doc.status === 'In progress' || doc.status === 'Not Started',
@@ -488,7 +520,7 @@
                         </span>
                       </td>
                     }
-                    @if (visibleColumns().editors) { 
+                    @if (visibleColumns().editors) {
                       <td class="px-4 py-3">
                         <div class="flex items-center space-x-1.5">
                           @for (editor of doc.editors; track editor.name) {
@@ -521,6 +553,46 @@
             </table>
         </div>
             </section>
+          } @else if (currentPage() === 'simple-ta') {
+            <div class="h-[calc(100vh-96px)] -mx-2 sm:-mx-4">
+              <app-simple-ta class="h-full" [currentStudentName]="currentUserName()" (openSource)="navigateTo('documents')"></app-simple-ta>
+            </div>
+          } @else if (currentPage() === 'accounts') {
+            <h1 class="text-2xl font-semibold text-gray-900 mb-4">Accounts</h1>
+            <div class="bg-white shadow-lg rounded-lg border border-gray-200">
+              <table class="w-full text-sm text-left text-gray-600">
+                <thead class="text-[11px] text-gray-700 bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-2">Name</th>
+                    <th class="px-4 py-2">Role</th>
+                    <th class="px-4 py-2">As Instructor</th>
+                    <th class="px-4 py-2">As Editor</th>
+                    <th class="px-4 py-2">Enrollments</th>
+                    <th class="px-4 py-2">Sections/Syllabi</th>
+                    <th class="px-4 py-2">Subjects</th>
+                    <th class="px-4 py-2">Organizations</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (acc of accounts(); track acc.name) {
+                    <tr class="bg-white border-b hover:bg-gray-50 transition-colors duration-200">
+                      <td class="px-4 py-3 font-medium text-gray-900">{{ acc.name }}</td>
+                      <td class="px-4 py-3">{{ acc.roles }}</td>
+                      <td class="px-4 py-3">{{ acc.instructorCount }}</td>
+                      <td class="px-4 py-3">{{ acc.editorCount }}</td>
+                      <td class="px-4 py-3">{{ acc.studentEnrollmentCount || 0 }}</td>
+                      <td class="px-4 py-3">{{ acc.sections.join(', ') }}</td>
+                      <td class="px-4 py-3">{{ acc.subjects.join(', ') }}</td>
+                      <td class="px-4 py-3">{{ acc.organizations.join(', ') }}</td>
+                    </tr>
+                  } @empty {
+                    <tr class="bg-white border-b">
+                      <td colspan="8" class="px-4 py-10 text-center text-gray-500">No accounts found.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           } @else {
             <app-plan-admin (editTask)="onPlanAdminEditTask($event)" (addTask)="onPlanAdminAddTask()"></app-plan-admin>
           }
@@ -532,7 +604,7 @@
 
 <!-- Edit Modal -->
 @if(editingDocument(); as doc) {
-  <app-edit-modal [document]="doc" (close)="closeModal()" (save)="saveDocument($event)"></app-edit-modal>
+  <app-edit-modal [document]="doc" [readonly]="!canEdit()" [currentUserRole]="currentUserRole()" [currentUserName]="currentUserName()" (close)="closeModal()" (save)="saveDocument($event)"></app-edit-modal>
 }
 
 @if (showPlanTaskModal()) {
