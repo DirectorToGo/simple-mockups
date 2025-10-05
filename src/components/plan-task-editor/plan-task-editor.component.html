@@ -1,17 +1,142 @@
-<div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full mx-auto">
-  <div class="grid grid-cols-1 lg:grid-cols-4">
-    <div class="relative flex flex-col border-gray-200" [ngClass]="showHelpSidebar() ? ['lg:col-span-3','lg:border-r'] : ['lg:col-span-4']">
-      <!-- Side handle to toggle help sidebar -->
+<div class="bg-white shadow-xl w-full mx-auto">
+  <div class="grid grid-cols-1 lg:grid-cols-6">
+    <!-- Left side: Browse existing tasks (collapsible) -->
+    @if (showBrowseSidebar()) {
+      <div class="hidden lg:flex lg:col-span-2 h-full border-r border-gray-200 flex-col p-6">
+        <nav class="flex items-center mb-4" aria-label="Side panel tabs">
+          <button type="button"
+                  (click)="selectSideTab('browse')"
+                  class="flex-1 px-6 py-3 text-sm font-medium border-b-2"
+                  [class]="sideTab() === 'browse' ? 'bg-white text-pink-600 border-pink-600' : 'bg-gray-200 text-gray-600 border-transparent'">
+            Browse
+          </button>
+          <button type="button"
+                  (click)="selectSideTab('help')"
+                  class="flex-1 px-6 py-3 text-sm font-medium border-b-2"
+                  [class]="sideTab() === 'help' ? 'bg-white text-pink-600 border-pink-600' : 'bg-gray-200 text-gray-600 border-transparent'">
+            How to
+          </button>
+        </nav>
+
+        @switch (sideTab()) {
+          @case ('browse') {
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Browse existing tasks</h2>
+            <div>
+              <input type="text"
+                     placeholder="Search"
+                     [value]="copySearchQuery()"
+                     (input)="onCopySearch($event)"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" />
+            </div>
+            <ul class="mt-4 space-y-0 divide-y divide-gray-200 overflow-y-auto flex-1 pr-1">
+              @for (entry of copyTaskOptions(); track entry.task.id) {
+                <li class="py-3 flex items-start justify-between">
+                  <div class="min-w-0 pr-3">
+                    <p class="text-sm font-semibold text-gray-900 truncate">{{ entry.task.name }}</p>
+                    @if (entry.task.description) {
+                      <p class="text-xs text-gray-500 truncate">{{ entry.task.description }}</p>
+                    }
+                    <p class="text-[11px] text-gray-400">{{ entry.planName }}</p>
+                  </div>
+                  <button type="button"
+                          (click)="copyConditionsFrom(entry.task)"
+                          class="px-4 py-2 rounded-md text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+                    Select
+                  </button>
+                </li>
+              } @empty {
+                <li class="py-6 text-sm text-gray-500">No tasks found.</li>
+              }
+            </ul>
+          }
+          @case ('help') {
+            <div class="space-y-4">
+              <div class="flex items-center justify-between mb-2">
+                <h2 class="text-2xl font-bold text-gray-800">How to Configure a Prep Task</h2>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-gray-900">calendar_today</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Term</h3>
+                  </div>
+                  <p class="mt-2 text-gray-700">Choose which academic term this task should apply to.</p>
+                </div>
+                <hr class="border-gray-200">
+                <div>
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-gray-900">title</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Name</h3>
+                  </div>
+                  <p class="mt-2 text-gray-700">Appears as the task title in the plan column and on the task details page.</p>
+                </div>
+                <hr class="border-gray-200">
+                <div>
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-gray-900">description</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Description</h3>
+                  </div>
+                  <p class="mt-2 text-gray-700">Shown to instructors as guidance when they view or select the task.</p>
+                </div>
+                <hr class="border-gray-200">
+                <div>
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-gray-900">tune</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Condition Group</h3>
+                  </div>
+                  <p class="mt-2 text-gray-700">Sets the logic that determines whether the task passes or fails.</p>
+                </div>
+                <hr class="border-gray-200">
+                <div>
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-gray-900">visibility</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Display Type</h3>
+                  </div>
+                  <p class="mt-2 text-gray-700">Controls how results appear in the Prep Plan table (e.g., Pass/Fail, Percent, Number, Date).</p>
+                </div>
+                <hr class="border-gray-200">
+                <div>
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-gray-900">edit</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Instructor Editing</h3>
+                  </div>
+                  <ul class="mt-2 text-gray-700 list-disc list-inside space-y-2">
+                    <li><strong>Allow instructor to view task:</strong> Makes it visible in the Prep LTI.</li>
+                    <li><strong>Allow instructor to override task:</strong> Lets them manually mark completion in the LTI.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    }
+    <div class="relative flex flex-col" [ngClass]="showBrowseSidebar() ? 'lg:col-span-4' : 'lg:col-span-6'">
+      <!-- Round side handles like primary nav -->
+      <!-- Left: Consolidated side panel toggle -->
       <button type="button"
-              (click)="toggleHelpSidebar()"
-              class="hidden lg:flex items-center justify-center absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-10 rounded-md border border-gray-200 bg-white text-pink-600 shadow hover:bg-pink-50 z-10"
-              [attr.aria-label]="showHelpSidebar() ? 'Hide help' : 'Show help'"
-              title="Toggle help">
-        <span class="text-base leading-none">{{ showHelpSidebar() ? '>' : '<' }}</span>
+              (click)="toggleBrowseSidebar()"
+              class="hidden lg:flex items-center justify-center absolute left-0 top-16 z-20 h-8 w-8 rounded-full bg-white border border-gray-300 shadow-sm text-gray-600 hover:text-pink-600 hover:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              [ngClass]="showBrowseSidebar() ? '-translate-x-1/2' : 'translate-x-0 ml-1'"
+              [attr.aria-label]="showBrowseSidebar() ? 'Hide side panel' : 'Show side panel'"
+              title="Toggle side panel">
+        <span class="material-symbols-outlined text-base" [class.rotate-180]="showBrowseSidebar()">chevron_left</span>
       </button>
 
       <!-- Form Body -->
-      <div class="p-8 space-y-8 flex-grow">
+      <div class="p-8 space-y-8 flex-grow" [ngClass]="showBrowseSidebar() ? '' : 'lg:pl-12'">
         <!-- Top Fields & Test Area -->
         <div class="grid grid-cols-1 md:grid-cols-5 gap-x-8 gap-y-6">
           <!-- Column 1: Inputs (60%) -->
@@ -334,7 +459,7 @@
 
         <!-- Add Condition Group Button -->
         <div class="flex items-center space-x-2">
-          <button (click)="onAddConditionGroup()" class="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+          <button (click)="onAddConditionGroup()" class="btn btn-secondary btn-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
             <span>Add condition group</span>
           </button>
@@ -397,9 +522,9 @@
                       <!-- Primary condition -->
                       <div class="flex items-center space-x-2">
                         <span class="w-12 text-sm font-medium text-gray-500 flex-shrink-0">{{ isFirstCondition ? 'Where' : 'AND' }}</span>
-                        <div class="flex-grow flex gap-2 items-center">
+                        <div class="flex-grow min-w-0 flex flex-wrap gap-2 items-center">
                           <!-- Type Dropdown -->
-                          <div class="relative flex-1">
+                          <div class="relative basis-[180px] flex-shrink-0">
                             <button (click)="toggleDropdown('type-' + condition.id)" [attr.data-dropdown-button]="'type-' + condition.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!condition.groupType" [class.text-gray-600]="condition.groupType" [class.border-red-500]="isGroupTypeInvalid(condition)" [class.focus:ring-red-500]="isGroupTypeInvalid(condition)" [class.focus:ring-pink-500]="!isGroupTypeInvalid(condition)"><span class="truncate">{{ condition.groupType || 'Select type' }}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
                             <div [attr.data-dropdown-panel]="'type-' + condition.id" class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'type-' + condition.id" [class.scale-100]="activeDropdown() === 'type-' + condition.id" [class.opacity-0]="activeDropdown() !== 'type-' + condition.id" [class.scale-95]="activeDropdown() !== 'type-' + condition.id" [class.invisible]="activeDropdown() !== 'type-' + condition.id">
                               <ul class="py-1 max-h-60 overflow-y-auto">
@@ -411,28 +536,28 @@
                           </div>
                           <!-- Source Data Dropdown -->
                           @if(condition.groupType) {
-                            <div class="relative flex-1">
+                            <div class="relative basis-[180px] flex-shrink-0">
                               <button (click)="toggleDropdown('source-' + condition.id)" [attr.data-dropdown-button]="'source-' + condition.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!condition.source" [class.text-gray-600]="condition.source" [class.border-red-500]="isSourceInvalid(condition)" [class.focus:ring-red-500]="isSourceInvalid(condition)" [class.focus:ring-pink-500]="!isSourceInvalid(condition)"><span class="truncate">{{ condition.source || 'Select source' }}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
                               <div [attr.data-dropdown-panel]="'source-' + condition.id" class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'source-' + condition.id" [class.scale-100]="activeDropdown() === 'source-' + condition.id" [class.opacity-0]="activeDropdown() !== 'source-' + condition.id" [class.scale-95]="activeDropdown() !== 'source-' + condition.id" [class.invisible]="activeDropdown() !== 'source-' + condition.id"><div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div><ul class="py-1 max-h-60 overflow-y-auto">@for (opt of getFilteredSourceOptionsForCondition(condition); track opt) { <li><button (click)="selectConditionSource(group.id, condition.id, opt)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ opt }}</button></li> }</ul></div>
                             </div>
                           }
                           <!-- Property Dropdown -->
                           @if(condition.source) {
-                            <div class="relative flex-1">
+                            <div class="relative basis-[200px] flex-shrink-0">
                               <button (click)="toggleDropdown('property-' + condition.id)" [attr.data-dropdown-button]="'property-' + condition.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!condition.property" [class.text-gray-600]="condition.property" [class.border-red-500]="isPropertyInvalid(condition)" [class.focus:ring-red-500]="isPropertyInvalid(condition)" [class.focus:ring-pink-500]="!isPropertyInvalid(condition)"><span class="truncate">{{ condition.property || 'Select property' }}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
                               <div [attr.data-dropdown-panel]="'property-' + condition.id" class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'property-' + condition.id" [class.scale-100]="activeDropdown() === 'property-' + condition.id" [class.opacity-0]="activeDropdown() !== 'property-' + condition.id" [class.scale-95]="activeDropdown() !== 'property-' + condition.id" [class.invisible]="activeDropdown() !== 'property-' + condition.id"><div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div><ul class="py-1 max-h-60 overflow-y-auto">@for(prop of getFilteredPropertiesForCondition(condition); track prop) { <li><button (click)="selectConditionProperty(group.id, condition.id, prop)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ prop }}</button></li> }</ul></div>
                             </div>
                           }
                           <!-- Operator Dropdown -->
                           @if(condition.property) {
-                            <div class="relative flex-1">
+                            <div class="relative basis-[180px] flex-shrink-0">
                               <button (click)="toggleDropdown('operator-' + condition.id)" [attr.data-dropdown-button]="'operator-' + condition.id" class="w-full text-left flex items-center justify-between pl-3 pr-2 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-white text-sm" [class.text-gray-400]="!condition.operator" [class.text-gray-600]="condition.operator" [class.border-red-500]="isOperatorInvalid(condition)" [class.focus:ring-red-500]="isOperatorInvalid(condition)" [class.focus:ring-pink-500]="!isOperatorInvalid(condition)"><span class="truncate">{{ condition.operator || 'Select operator' }}</span><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
                               <div [attr.data-dropdown-panel]="'operator-' + condition.id" class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left flex flex-col transition-all duration-200 ease-out" [class.opacity-100]="activeDropdown() === 'operator-' + condition.id" [class.scale-100]="activeDropdown() === 'operator-' + condition.id" [class.opacity-0]="activeDropdown() !== 'operator-' + condition.id" [class.scale-95]="activeDropdown() !== 'operator-' + condition.id" [class.invisible]="activeDropdown() !== 'operator-' + condition.id"><div class="p-2 border-b border-gray-200"><input type="text" placeholder="Search..." class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" [value]="dropdownSearchQuery()" (input)="onDropdownSearch($event)"></div><ul class="py-1 max-h-60 overflow-y-auto">@for(op of getFilteredOperatorsForCondition(condition); track op) { <li><button (click)="selectConditionOperator(group.id, condition.id, op)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ op }}</button></li> }</ul></div>
                             </div>
                           }
                           <!-- Value Input -->
                           @if (condition.operator && doesOperatorRequireValue(condition.operator)) {
-                            <div class="flex-1">
+                            <div class="flex-[1.5] min-w-[240px]">
                               @switch (getPropertyConfigForCondition(condition)?.valueType) {
                                 @case ('select') {
                                   <div class="relative">
@@ -678,12 +803,7 @@
                             @if (isSubConditionRequirementUnmet(condition)) {
                               <p class="text-xs text-red-600">Add at least one where sub condition to complete this rule.</p>
                             }
-                            <button (click)="addSubCondition(condition.id)"
-                                    class="text-sm font-medium transition-colors"
-                                    [class.text-gray-700]="!isSubConditionRequirementUnmet(condition)"
-                                    [class.text-red-600]="isSubConditionRequirementUnmet(condition)"
-                                    [class.hover:text-gray-900]="!isSubConditionRequirementUnmet(condition)"
-                                    [class.hover:text-red-700]="isSubConditionRequirementUnmet(condition)">+ Add sub condition</button>
+                            <button (click)="addSubCondition(condition.id)" class="btn btn-secondary btn-sm">+ Add sub condition</button>
                           </div>
                         </div>
                       }
@@ -691,7 +811,7 @@
                   }
 
                   <div class="pt-2 pl-12">
-                    <button (click)="addCondition(group)" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">+ Add condition</button>
+                    <button (click)="addCondition(group)" class="btn btn-secondary btn-sm">+ Add condition</button>
                   </div>
                 </div>
               </div>
@@ -885,91 +1005,7 @@
       </div>
     </div>
 
-    @if (showHelpSidebar()) {
-      <div class="lg:col-span-1">
-        <div class="bg-pink-50 rounded-r-lg p-6 h-full">
-          <div class="flex items-center justify-between mb-2">
-            <h2 class="text-2xl font-bold text-gray-800">How to Configure a Prep Task</h2>
-          </div>
-          <div class="space-y-4">
-          <div>
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                <span class="material-symbols-outlined text-gray-900">
-                  calendar_today
-                </span>
-              </div>
-              <h3 class="text-lg font-semibold text-gray-900">Term</h3>
-            </div>
-            <p class="mt-2 text-gray-700">Choose which academic term this task should apply to.</p>
-          </div>
-          <hr class="border-gray-200">
-          <div>
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                <span class="material-symbols-outlined text-gray-900">
-                  title
-                </span>
-              </div>
-              <h3 class="text-lg font-semibold text-gray-900">Name</h3>
-            </div>
-            <p class="mt-2 text-gray-700">Appears as the task title in the plan column and on the task details page.</p>
-          </div>
-          <hr class="border-gray-200">
-          <div>
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                 <span class="material-symbols-outlined text-gray-900">
-                  description
-                </span>
-              </div>
-              <h3 class="text-lg font-semibold text-gray-900">Description</h3>
-            </div>
-            <p class="mt-2 text-gray-700">Shown to instructors as guidance when they view or select the task.</p>
-          </div>
-          <hr class="border-gray-200">
-          <div>
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                 <span class="material-symbols-outlined text-gray-900">
-                  tune
-                </span>
-              </div>
-              <h3 class="text-lg font-semibold text-gray-900">Condition Group</h3>
-            </div>
-            <p class="mt-2 text-gray-700">Sets the logic that determines whether the task passes or fails.</p>
-          </div>
-          <hr class="border-gray-200">
-          <div>
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                <span class="material-symbols-outlined text-gray-900">
-                  visibility
-                </span>
-              </div>
-              <h3 class="text-lg font-semibold text-gray-900">Display Type</h3>
-            </div>
-            <p class="mt-2 text-gray-700">Controls how results appear in the Prep Plan table (e.g., Pass/Fail, Percent, Number, Date).</p>
-          </div>
-          <hr class="border-gray-200">
-          <div>
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                <span class="material-symbols-outlined text-gray-900">
-                  edit
-                </span>
-              </div>
-              <h3 class="text-lg font-semibold text-gray-900">Instructor Editing</h3>
-            </div>
-            <ul class="mt-2 text-gray-700 list-disc list-inside space-y-2">
-              <li><strong>Allow instructor to view task:</strong> Makes it visible in the Prep LTI.</li>
-              <li><strong>Allow instructor to override task:</strong> Lets them manually mark completion in the LTI.</li>
-            </ul>
-          </div>
-        </div>
-        </div>
-      </div>
-    }
+
   </div>
 </div>
 
@@ -1035,7 +1071,7 @@
             <div class="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
               @for (attr of prepAttributes; track attr.key) {
                 <div class="space-y-1">
-                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ attr.label }}</label>
+                  <label class="block text-xs font-semibold text-gray-500 tracking-wide">{{ attr.label }}</label>
                   @if(attr.value?.length > 60 || attr.value?.includes('\n') || attr.value?.includes(',')) {
                     <textarea rows="3"
                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
