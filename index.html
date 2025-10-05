@@ -6,6 +6,28 @@
   <title>Document Track</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --app-primary-600: #db2777; /* pink-600 */
+      --app-primary-700: #be185d; /* pink-700 */
+      --app-pink-50: #fdf2f8;   /* tailwind pink-50 */
+      --app-pink-200: #fbcfe8;  /* tailwind pink-200 */
+    }
+    /* Ensure native controls use app's primary color */
+    input[type="checkbox"], input[type="radio"] { accent-color: var(--app-primary-600); }
+    button:focus, input:focus, select:focus, textarea:focus { outline-color: var(--app-primary-600); }
+
+    /* Button patterns */
+    .btn { display:inline-flex; align-items:center; gap:.375rem; border-radius:.375rem; font-weight:600; transition:background-color .15s ease, border-color .15s ease, color .15s ease; }
+    .btn-sm { padding:.375rem .75rem; font-size:.875rem; }
+    .btn-primary { background:var(--app-primary-600); border:1px solid var(--app-primary-600); color:#fff; }
+    .btn-primary:hover { background:var(--app-primary-700); border-color:var(--app-primary-700); }
+    .btn-secondary { background:#fff; border:1px solid var(--app-pink-200); color:var(--app-primary-600); }
+    .btn-secondary:hover { background:var(--app-pink-50); }
+    .btn-subtle { background:transparent; border:1px dashed var(--app-pink-200); color:var(--app-primary-600); }
+    .btn-subtle:hover { background:var(--app-pink-50); }
+  </style>
+
 <script>
   // This is a polyfill for the browser environment to use process.env.
   // In a real-world scenario, this would be handled by a build process (e.g., Vite, Webpack).

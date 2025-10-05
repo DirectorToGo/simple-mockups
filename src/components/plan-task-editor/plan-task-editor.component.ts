@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, computed, inject, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, inject, effect, output, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PlanTask, Condition, ConditionGroup, DisplayType, ConditionGroupType, SubCondition, ConditionResultType, ConditionResult } from '../../plan-task.types';
@@ -7,6 +7,7 @@ import { TestDataService } from '../../services/test-data.service';
 import { EvaluationService } from '../../services/evaluation.service';
 import { GeminiService } from '../../services/gemini.service';
 import { EvaluationResult, TestSection } from '../../plan-task-evaluation.types';
+import { PlanAdminService } from '../../services/plan-admin.service';
 
 // Operator sets
 const NUMERIC_OPERATORS = ['Equals', 'Does not equal', 'Is greater than', 'Is less than', 'Is greater than or equal to', 'Is less than or equal to', 'Is empty', 'Is not empty'];
@@ -159,9 +160,13 @@ export class PlanTaskEditorComponent {
   private testDataService = inject(TestDataService);
   private evaluationService = inject(EvaluationService);
   private geminiService = inject(GeminiService);
+  private planAdminService = inject(PlanAdminService);
   // --- AI CONFIG ---
   aiApiKeyInput = signal('');
   isAiConfigured() { return this.geminiService.isConfigured(); }
+  // Parent-provided mode: 'create' or 'edit' to set initial sidebar defaults
+  mode = input<'edit' | 'create'>('edit');
+
   saveAiApiKey() {
     const key = this.aiApiKeyInput().trim();
     if (!key) return;
@@ -354,8 +359,9 @@ export class PlanTaskEditorComponent {
   iconChoices = ['help', 'info', 'stop_circle', 'dangerous', 'event_busy', 'pause_circle', 'report', 'play_circle'];
 
   // --- COMPONENT STATE ---
-  task = signal<PlanTask>(this.MOCK_PLAN_TASK);
+  task = signal<PlanTask>(this.cloneTask(this.MOCK_PLAN_TASK));
   activeDropdown = signal<string | null>(null);
+  close = output<void>();
 
   // Search state for dropdowns
   dropdownSearchQuery = signal('');
@@ -380,9 +386,49 @@ export class PlanTaskEditorComponent {
 
 
   // --- HELP PANEL STATE ---
+  // --- BROWSE PANEL STATE ---
+  showBrowseSidebar = signal(true);
+  toggleBrowseSidebar() { this.showBrowseSidebar.update(v => !v); }
+  private _browseInit = false;
+
+  // --- CONSOLIDATED SIDE PANEL TABS ---
+  sideTab = signal<'browse' | 'help'>('browse');
+  selectSideTab(tab: 'browse' | 'help') { this.sideTab.set(tab); }
+
   // Full side help panel visibility (open by default)
   showHelpSidebar = signal(true);
   toggleHelpSidebar() { this.showHelpSidebar.update(v => !v); }
+
+
+  // --- COPY FROM EXISTING TASKS STATE ---
+  copySearchQuery = signal('');
+  copyTaskOptions = computed(() => {
+    const currentPlanId = this.planAdminService.selectedPlan()?.id ?? null;
+    const q = this.copySearchQuery().toLowerCase().trim();
+    const plans = this.planAdminService.plans();
+
+    const items = plans.flatMap(plan => plan.tasks.map(entry => ({
+      planId: plan.id,
+      planName: plan.name,
+      task: entry.task,
+    })));
+
+    const filtered = items.filter(it => it.planId !== currentPlanId);
+
+    if (!q) return filtered;
+    return filtered.filter(it =>
+      it.task.name.toLowerCase().includes(q) || (it.task.description?.toLowerCase().includes(q))
+    );
+  });
+
+  onCopySearch(event: Event) { this.copySearchQuery.set((event.target as HTMLInputElement).value); }
+
+  copyConditionsFrom(source: PlanTask) {
+    const clonedGroups = JSON.parse(JSON.stringify(source.conditionGroups || []));
+    this.task.update(t => ({ ...t, conditionGroups: clonedGroups }));
+    // Auto-collapse the browse panel after copying
+    this.showBrowseSidebar.set(false);
+  }
 
   // --- TEST EVALUATION STATE ---
   testSections = this.testDataService.testSections;
@@ -501,6 +547,24 @@ export class PlanTaskEditorComponent {
   });
 
   constructor() {
+    // Initialize browse panel default state based on mode (open for create, closed for edit)
+    effect(() => {
+      if (!this._browseInit) {
+        const m = this.mode();
+        this.showBrowseSidebar.set(m === 'create');
+        this._browseInit = true;
+      }
+    });
+
+    effect(() => {
+      const activeTask = this.planAdminService.activeTask();
+      if (activeTask) {
+        this.task.set(this.cloneTask(activeTask));
+      } else {
+        this.task.set(this.cloneTask(this.MOCK_PLAN_TASK));
+      }
+    });
+
     effect(() => {
       const active = this.activeDropdown();
       if (active === null) {
@@ -1012,6 +1076,9 @@ export class PlanTaskEditorComponent {
       createdGroupId = newGroupId;
       return {...task, conditionGroups: [...task.conditionGroups, newGroup]};
     });
+    // Auto-collapse the browse panel once a condition is added
+    this.showBrowseSidebar.set(false);
+
 
     if (createdGroupId !== null) {
       this.ensureGroupHistory(createdGroupId);
@@ -1402,8 +1469,18 @@ export class PlanTaskEditorComponent {
   }
 
   updateTaskAllowEdit(event: Event) { this.task.update(t => ({ ...t, allowEdit: (event.target as HTMLInputElement).checked })); }
-  saveChanges() { console.log('Save clicked. Current task state:', this.task()); }
-  cancelChanges() { console.log('Cancel clicked'); }
+  saveChanges() {
+    const currentTask = this.task();
+    this.planAdminService.saveActiveTask(currentTask);
+    console.log('Save clicked. Current task state:', currentTask);
+    this.close.emit();
+  }
+
+  cancelChanges() {
+    this.planAdminService.resetActiveTask();
+    console.log('Cancel clicked');
+    this.close.emit();
+  }
 
   selectTestSection(id: number | null) {
     this.selectedTestSectionId.set(id);
@@ -1855,5 +1932,9 @@ export class PlanTaskEditorComponent {
     const value = condition.value;
     const isValueMissing = value === '' || value === null || value === undefined;
     return this.doesOperatorRequireValue(condition.operator) && isValueMissing;
+  }
+
+  private cloneTask(task: PlanTask): PlanTask {
+    return JSON.parse(JSON.stringify(task));
   }
 }

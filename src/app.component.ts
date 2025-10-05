@@ -5,10 +5,18 @@ import { Document, DocumentStatus, DocumentType, TermCategory } from './document
 import { EditModalComponent } from './components/edit-modal/edit-modal.component';
 import { PlanTaskEditorComponent } from './components/plan-task-editor/plan-task-editor.component';
 import { TermFilterDropdownComponent } from './components/term-filter-dropdown/term-filter-dropdown.component';
+import { PlanAdminComponent } from './components/plan-admin/plan-admin.component';
+import { PlanAdminService } from './services/plan-admin.service';
 
 type ColumnKey = 'term' | 'name' | 'status' | 'editors' | 'type';
 type SortDirection = 'asc' | 'desc';
-type Page = 'documents' | 'plan-task';
+type Page = 'documents' | 'plan-admin';
+
+interface NavItem {
+  page: Page;
+  label: string;
+  icon: 'documents' | 'plan';
+}
 
 interface OrganizationNode {
   name: string;
@@ -19,13 +27,14 @@ interface OrganizationNode {
   selector: 'app-root',
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, EditModalComponent, PlanTaskEditorComponent, TermFilterDropdownComponent],
+  imports: [CommonModule, EditModalComponent, PlanTaskEditorComponent, TermFilterDropdownComponent, PlanAdminComponent],
   host: {
     '(document:click)': 'onDocumentClick($event)',
   }
 })
 export class AppComponent {
   private documentService = inject(DocumentService);
+  private planAdminService = inject(PlanAdminService);
   
   // State Signals
   allDocuments = this.documentService.documents;
@@ -33,8 +42,27 @@ export class AppComponent {
   activeDropdown = signal<string | null>(null);
   showAdvancedFilters = signal(false);
   actionDropdownOpen = signal<number | null>(null);
+  profileDropdownOpen = signal(false);
   currentPage = signal<Page>('documents');
-  activeNavDropdown = signal(false);
+  showPlanTaskModal = signal(false);
+  sidebarExpanded = signal(true);
+  planTaskModalMode = signal<'edit' | 'create'>('edit');
+
+  navItems: NavItem[] = [
+    { page: 'documents', label: 'Document Track', icon: 'documents' },
+    { page: 'plan-admin', label: 'Plan Admin', icon: 'plan' },
+  ];
+
+  pageTitle = computed(() => {
+    switch (this.currentPage()) {
+      case 'documents':
+        return 'Document Track';
+      case 'plan-admin':
+        return 'Plan Admin';
+      default:
+        return 'Document Track';
+    }
+  });
 
   // Element Refs for click-outside handling
   termFilterButtonRef = viewChild<ElementRef>('termFilterButton');
@@ -51,8 +79,8 @@ export class AppComponent {
   subjectFilterDropdownRef = viewChild<ElementRef>('subjectFilterDropdown');
   organizationFilterButtonRef = viewChild<ElementRef>('organizationFilterButton');
   organizationFilterDropdownRef = viewChild<ElementRef>('organizationFilterDropdown');
-  navButtonRef = viewChild<ElementRef>('navButton');
-  navDropdownRef = viewChild<ElementRef>('navDropdown');
+  profileButtonRef = viewChild<ElementRef>('profileButton');
+  profileDropdownRef = viewChild<ElementRef>('profileDropdown');
 
 
   // Column Visibility
@@ -364,25 +392,51 @@ export class AppComponent {
       }
     }
     
-    // Nav dropdown
-    if (this.activeNavDropdown()) {
-       if (!this.navButtonRef()?.nativeElement.contains(target) && !this.navDropdownRef()?.nativeElement.contains(target)) {
-        this.activeNavDropdown.set(false);
+    // Profile dropdown
+    if (this.profileDropdownOpen()) {
+      const clickedOnButtonOrInDropdown =
+        this.profileButtonRef()?.nativeElement.contains(target) ||
+        this.profileDropdownRef()?.nativeElement.contains(target);
+      
+      if (!clickedOnButtonOrInDropdown) {
+        this.profileDropdownOpen.set(false);
       }
     }
+    
   }
 
   toggleDropdown(name: string) {
     this.activeDropdown.update(current => (current === name ? null : name));
   }
   
-  toggleNavDropdown() {
-    this.activeNavDropdown.update(v => !v);
+  toggleProfileDropdown() {
+    this.profileDropdownOpen.update(v => !v);
+  }
+
+  toggleSidebar() {
+    this.sidebarExpanded.update(v => !v);
   }
 
   navigateTo(page: Page) {
     this.currentPage.set(page);
-    this.activeNavDropdown.set(false);
+  }
+
+  onPlanAdminEditTask(taskId: number) {
+    this.planAdminService.setActiveTask(taskId);
+    this.planTaskModalMode.set('edit');
+    this.showPlanTaskModal.set(true);
+  }
+
+  onPlanAdminAddTask() {
+    const newTaskId = this.planAdminService.createTask();
+    this.planTaskModalMode.set('create');
+    this.showPlanTaskModal.set(true);
+  }
+
+  closePlanTaskModal() {
+    this.showPlanTaskModal.set(false);
+    this.planAdminService.clearActiveTask();
+    this.planTaskModalMode.set('edit'); // Reset to default mode
   }
 
   toggleAdvancedFilters() {

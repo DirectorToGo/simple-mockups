@@ -1,46 +1,94 @@
-<div class="p-4 sm:p-6 lg:p-8 font-sans">
-  <div class="max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-4xl font-bold text-gray-800">{{ currentPage() === 'documents' ? 'Document Track' : 'Edit Plan Task' }}</h1>
+<div class="min-h-screen bg-gray-50 font-sans flex flex-col">
+  <header class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="h-14 px-4 flex items-center justify-between">
+      <div class="flex items-center">
+        <div class="h-8 w-8 rounded-lg bg-pink-600 flex items-center justify-center text-white font-semibold text-base">S</div>
+      </div>
       <div class="relative">
-        <button #navButton (click)="toggleNavDropdown()" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-700">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        <button #profileButton type="button" (click)="toggleProfileDropdown()" class="relative flex items-center justify-center h-9 w-9 rounded-full bg-gray-200 text-gray-600 hover:text-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-1 focus:ring-offset-white">
+          <span class="sr-only">Open profile</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a7.5 7.5 0 0 1 15 0" />
           </svg>
         </button>
-        <div #navDropdown class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-30 border border-gray-200 origin-top-right transition-all duration-200 ease-out"
-             [class.opacity-100]="activeNavDropdown()"
-             [class.scale-100]="activeNavDropdown()"
-             [class.opacity-0]="!activeNavDropdown()"
-             [class.scale-95]="!activeNavDropdown()"
-             [class.invisible]="!activeNavDropdown()">
+        <div #profileDropdown class="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-right transition-all duration-200 ease-out"
+             [class.opacity-100]="profileDropdownOpen()"
+             [class.scale-100]="profileDropdownOpen()"
+             [class.opacity-0]="!profileDropdownOpen()"
+             [class.scale-95]="!profileDropdownOpen()"
+             [class.invisible]="!profileDropdownOpen()">
           <ul class="py-1">
             <li>
-              <button (click)="navigateTo('documents')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors" [class.bg-gray-100]="currentPage() === 'documents'">
-                Document Track
-              </button>
+              <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Admin</button>
             </li>
             <li>
-              <button (click)="navigateTo('plan-task')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors" [class.bg-gray-100]="currentPage() === 'plan-task'">
-                Plan Task Editor
-              </button>
+              <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Instructor</button>
+            </li>
+            <li>
+              <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Student</button>
             </li>
           </ul>
         </div>
       </div>
     </div>
-
-    @if (currentPage() === 'documents') {
-      <main>
+  </header>
+  <div class="flex flex-1 overflow-hidden">
+    <aside class="relative flex-shrink-0 bg-white border-r border-gray-200 transition-all duration-300 ease-in-out overflow-visible" [class.w-56]="sidebarExpanded()" [class.w-16]="!sidebarExpanded()">
+      <button type="button"
+              (click)="toggleSidebar()"
+              class="absolute right-0 top-16 translate-x-1/2 z-20 flex items-center justify-center h-8 w-8 rounded-full bg-white border border-gray-300 shadow-sm text-gray-600 hover:text-pink-600 hover:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-500">
+        <span class="material-symbols-outlined text-base" [class.rotate-180]="sidebarExpanded()">chevron_left</span>
+      </button>
+      <div class="h-full flex flex-col">
+        <nav id="sidebar-navigation" class="flex-1 py-3 px-3 space-y-1.5" aria-label="Primary">
+          @for (navItem of navItems; track navItem.page) {
+            <button
+              type="button"
+              (click)="navigateTo(navItem.page)"
+              class="flex items-center gap-2 w-full px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-1 focus:ring-offset-white"
+              [ngClass]="{
+                'bg-pink-50 text-pink-600 hover:bg-pink-100': currentPage() === navItem.page,
+                'text-gray-600 hover:bg-gray-100': currentPage() !== navItem.page
+              }"
+              [class.justify-center]="!sidebarExpanded()"
+              [attr.aria-current]="currentPage() === navItem.page ? 'page' : null"
+              [attr.aria-label]="navItem.label"
+              [attr.title]="navItem.label">
+              <span class="flex items-center justify-center h-8 w-8 rounded-md bg-gray-100 text-gray-600 transition-colors"
+                    [class.bg-pink-100]="currentPage() === navItem.page"
+                    [class.text-pink-600]="currentPage() === navItem.page">
+                @switch (navItem.icon) {
+                  @case ('documents') {
+                    <span class="material-symbols-outlined text-[20px] leading-none">article</span>
+                  }
+                  @case ('plan') {
+                    <span class="material-symbols-outlined text-[20px] leading-none">tactic</span>
+                  }
+                }
+              </span>
+              @if (sidebarExpanded()) {
+                <span class="truncate">{{ navItem.label }}</span>
+              }
+            </button>
+          }
+        </nav>
+      </div>
+    </aside>
+    <main class="flex-1 overflow-y-auto">
+      <div class="px-3 sm:px-4 lg:px-6 py-5">
+        <div class="max-w-7xl mx-auto">
+          @if (currentPage() === 'documents') {
+            <h1 class="text-2xl font-semibold text-gray-900 mb-4">Document Track</h1>
+            <section class="space-y-4">
         <!-- Filters -->
-        <div class="mb-4">
-          <div class="flex flex-wrap items-end gap-4">
+        <div class="mb-3">
+          <div class="flex flex-wrap items-end gap-3">
             <!-- Term Filter -->
             <div class="relative w-full sm:w-auto sm:flex-1 md:max-w-xs">
-              <label for="term-filter-button" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900 z-10">Term</label>
+              <label for="term-filter-button" class="absolute -top-2 left-2 inline-block bg-white px-1 text-[10px] font-medium text-gray-900 z-10">Term</label>
               <div class="relative">
-                <button #termFilterButton id="term-filter-button" (click)="toggleDropdown('term')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                <button #termFilterButton id="term-filter-button" (click)="toggleDropdown('term')" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
                   <span class="truncate">{{ termButtonText() }}</span>
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -63,29 +111,25 @@
             
             <!-- Keyword Search -->
             <div class="flex-grow">
-              <input id="keyword-search" type="text" (input)="onKeywordSearch($event)" placeholder="Looking for something..." class="block w-full pl-3 pr-10 py-3 text-base border border-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white text-gray-900">
+              <input id="keyword-search" type="text" (input)="onKeywordSearch($event)" placeholder="Looking for something..." class="block w-full pl-3 pr-9 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white text-gray-900">
             </div>
 
             <!-- Filter/Column Buttons -->
-            <div class="relative">
-              <button (click)="toggleAdvancedFilters()" class="relative flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                @if(activeFilterCount() > 0) {
-                  <span class="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-pink-600 text-white rounded-full text-xs">{{ activeFilterCount() }}</span>
-                }
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2 text-gray-500">
-                  <path fill-rule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 0 1 .628.74v2.288a2.25 2.25 0 0 1-.659 1.59l-4.682 4.683a2.25 2.25 0 0 0-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 0 1 8 18.25v-5.757a2.25 2.25 0 0 0-.659-1.59L2.659 6.22A2.25 2.25 0 0 1 2 4.629V2.34a.75.75 0 0 1 .628-.74Z" clip-rule="evenodd" />
-                </svg>
-                Filters
-              </button>
-            </div>
-            <div class="relative">
-              <button #columnsButton (click)="toggleDropdown('columns')" class="flex items-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 mr-2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
-                </svg>
-                Columns
-              </button>
-              <div #columnsDropdown class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-right transition-all duration-200 ease-out"
+            <button type="button" (click)="toggleAdvancedFilters()" class="relative flex items-center justify-center px-3.5 py-2.5 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+              @if(activeFilterCount() > 0) {
+                <span class="absolute -top-2 -right-2 flex items-center justify-center w-4 h-4 bg-pink-600 text-white rounded-full text-[10px]">{{ activeFilterCount() }}</span>
+              }
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5 text-gray-500">
+                <path fill-rule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 0 1 .628.74v2.288a2.25 2.25 0 0 1-.659 1.59l-4.682 4.683a2.25 2.25 0 0 0-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 0 1 8 18.25v-5.757a2.25 2.25 0 0 0-.659-1.59L2.659 6.22A2.25 2.25 0 0 1 2 4.629V2.34a.75.75 0 0 1 .628-.74Z" clip-rule="evenodd" />
+              </svg>
+              Filters
+            </button>
+            <button type="button" #columnsButton (click)="toggleDropdown('columns')" class="flex items-center px-3.5 py-2.5 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-pink-600 hover:bg-pink-700 transition-colors relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4 mr-1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+              </svg>
+              Columns
+              <div #columnsDropdown class="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-right transition-all duration-200 ease-out"
                   [class.opacity-100]="activeDropdown() === 'columns'"
                   [class.scale-100]="activeDropdown() === 'columns'"
                   [class.opacity-0]="activeDropdown() !== 'columns'"
@@ -107,20 +151,20 @@
                   }
                 </ul>
               </div>
-            </div>
+            </button>
           </div>
           
           <!-- Advanced Filters (collapsible) -->
           <div class="transition-all duration-300 ease-in-out" 
-              [class.max-h-96]="showAdvancedFilters()" 
+              [class.max-h-80]="showAdvancedFilters()" 
               [class.max-h-0]="!showAdvancedFilters()" 
               [class.opacity-100]="showAdvancedFilters()"
               [class.opacity-0]="!showAdvancedFilters()"
-              [class.pt-4]="showAdvancedFilters()">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              [class.pt-3]="showAdvancedFilters()">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               <!-- Status Filter -->
                 <div class="relative">
-                  <button #statusFilterButton (click)="toggleDropdown('status')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                  <button #statusFilterButton (click)="toggleDropdown('status')" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
                     <span class="truncate">{{ statusButtonText() }}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                   </button>
@@ -133,11 +177,11 @@
                     <ul class="py-1">
                       @for(option of statusOptions; track option) {
                         <li>
-                          <label class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors">
+                          <label class="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors">
                             <input type="checkbox" class="sr-only" [checked]="statusFilter().includes(option)" (change)="toggleStatusFilter(option)">
-                            <div class="w-5 h-5 mr-3 flex items-center justify-center border-2 rounded" [class]="statusFilter().includes(option) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-400'">
+                            <div class="w-4 h-4 mr-2 flex items-center justify-center border-2 rounded" [class]="statusFilter().includes(option) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-300'">
                               @if(statusFilter().includes(option)) {
-                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
                               }
                             </div>
                             <span>{{ option }}</span>
@@ -149,7 +193,7 @@
                 </div>
               <!-- Doc Type Filter -->
                 <div class="relative">
-                  <button #docTypeFilterButton (click)="toggleDropdown('docType')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                  <button #docTypeFilterButton (click)="toggleDropdown('docType')" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
                     <span class="truncate capitalize">{{ docTypeButtonText() }}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                   </button>
@@ -162,11 +206,11 @@
                     <ul class="py-1">
                       @for(option of docTypeOptions; track option) {
                         <li>
-                          <label class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer capitalize transition-colors">
+                          <label class="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 cursor-pointer capitalize transition-colors">
                             <input type="checkbox" class="sr-only" [checked]="docTypeFilter().includes(option)" (change)="toggleDocTypeFilter(option)">
-                            <div class="w-5 h-5 mr-3 flex items-center justify-center border-2 rounded" [class]="docTypeFilter().includes(option) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-400'">
+                            <div class="w-4 h-4 mr-2 flex items-center justify-center border-2 rounded" [class]="docTypeFilter().includes(option) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-300'">
                               @if(docTypeFilter().includes(option)) {
-                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
                               }
                             </div>
                             <span>{{ option }}</span>
@@ -178,7 +222,7 @@
                 </div>
               <!-- Published Filter -->
                 <div class="relative">
-                  <button #publishedFilterButton (click)="toggleDropdown('published')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                  <button #publishedFilterButton (click)="toggleDropdown('published')" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
                     <span class="truncate">{{ publishedButtonText() }}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                   </button>
@@ -191,11 +235,11 @@
                     <ul class="py-1">
                       @for(option of publishedOptions; track option) {
                         <li>
-                          <label class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors">
+                          <label class="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors">
                             <input type="checkbox" class="sr-only" [checked]="publishedFilter().includes(option)" (change)="togglePublishedFilter(option)">
-                            <div class="w-5 h-5 mr-3 flex items-center justify-center border-2 rounded" [class]="publishedFilter().includes(option) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-400'">
+                            <div class="w-4 h-4 mr-2 flex items-center justify-center border-2 rounded" [class]="publishedFilter().includes(option) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-300'">
                               @if(publishedFilter().includes(option)) {
-                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
                               }
                             </div>
                             <span>{{ option }}</span>
@@ -207,7 +251,7 @@
                 </div>
               <!-- Subject Filter -->
                 <div class="relative">
-                  <button #subjectFilterButton (click)="toggleDropdown('subject')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                  <button #subjectFilterButton (click)="toggleDropdown('subject')" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
                     <span class="truncate capitalize flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-gray-500">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
@@ -231,18 +275,18 @@
                       </div>
                     </div>
                     <ul class="py-1 max-h-60 overflow-y-auto">
-                      <li><button (click)="selectSubject('')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">All Subjects</button></li>
+                      <li><button (click)="selectSubject('')" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">All Subjects</button></li>
                       @for(subject of filteredSubjects(); track subject) {
-                        <li><button (click)="selectSubject(subject)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">{{ subject }}</button></li>
+                        <li><button (click)="selectSubject(subject)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">{{ subject }}</button></li>
                       } @empty {
-                        <li><span class="block px-4 py-2 text-sm text-gray-500">No subjects found.</span></li>
+                        <li><span class="block px-3 py-1.5 text-xs text-gray-500">No subjects found.</span></li>
                       }
                     </ul>
                   </div>
                 </div>
               <!-- Organization Filter -->
                 <div class="relative">
-                  <button #organizationFilterButton (click)="toggleDropdown('organization')" class="flex items-center justify-between w-full pl-3 pr-2 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md bg-white">
+                  <button #organizationFilterButton (click)="toggleDropdown('organization')" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
                     <span class="truncate flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-gray-500">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
@@ -266,44 +310,48 @@
                       </div>
                     </div>
                     <ul class="py-1 max-h-60 overflow-y-auto">
-                      <li><button (click)="selectOrganization('')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">All Organizations</button></li>
+                      <li><button (click)="selectOrganization('')" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">All Organizations</button></li>
                       @for(org of filteredFlatOrganizationHierarchy(); track org.name) {
                         <li>
                           <button (click)="selectOrganization(org.name)" 
-                                  class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                  [style.padding-left]="(1 + org.level * 1.5) + 'rem'">
+                                  class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                                  [style.padding-left]="(0.75 + org.level * 1.2) + 'rem'">
                             {{ org.name }}
                           </button>
                         </li>
                       } @empty {
-                        <li><span class="block px-4 py-2 text-sm text-gray-500">No organizations found.</span></li>
+                        <li><span class="block px-3 py-1.5 text-xs text-gray-500">No organizations found.</span></li>
                       }
                     </ul>
                   </div>
                 </div>
               <!-- Instructor Filter -->
               <div>
-                <input id="instructor-filter" type="text" (input)="onInstructorFilter($event)" placeholder="Instructor" class="w-full py-3 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900">
+                <input id="instructor-filter" type="text" (input)="onInstructorFilter($event)" placeholder="Instructor" class="w-full py-2.5 px-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900">
               </div>
             </div>
           </div>
           
-          <p class="inline-block mt-4 text-sm text-pink-600">Don't see the document you're looking for?</p>
+          <p class="mt-3 text-xs">
+            <a href="#" class="text-pink-600 hover:text-pink-700 underline" (click)="$event.preventDefault()">
+              Don't see the document you're looking for?
+            </a>
+          </p>
         </div>
 
         <!-- Pagination -->
-        <div class="flex justify-end items-center mb-4">
-          <div class="flex items-center space-x-4 text-sm text-gray-600">
+        <div class="flex justify-end items-center mb-3">
+          <div class="flex items-center space-x-3 text-xs text-gray-600">
             <span>Items per page {{ itemsPerPage() }}</span>
             <span>{{ (paginationCurrentPage() - 1) * itemsPerPage() + 1 }} - {{ (paginationCurrentPage() * itemsPerPage()) > filteredDocuments().length ? filteredDocuments().length : (paginationCurrentPage() * itemsPerPage()) }} of {{ filteredDocuments().length }}</span>
             <div class="flex items-center">
               <button (click)="prevPage()" [disabled]="paginationCurrentPage() === 1" class="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0z" clip-rule="evenodd" />
                 </svg>
               </button>
               <button (click)="nextPage()" [disabled]="paginationCurrentPage() === totalPages()" class="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06z" clip-rule="evenodd" />
                 </svg>
               </button>
@@ -314,11 +362,11 @@
         <!-- Documents Table -->
         <div class="bg-white shadow-lg rounded-lg border border-gray-200">
           <table class="w-full text-sm text-left text-gray-600">
-              <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+              <thead class="text-[11px] text-gray-700 bg-gray-50">
                 <tr>
-                  <th scope="col" class="px-6 py-3 w-40"></th>
+                  <th scope="col" class="px-4 py-2 w-32"></th>
                   @if (visibleColumns().term) { 
-                    <th scope="col" class="px-6 py-3">
+                    <th scope="col" class="px-4 py-2">
                       <button (click)="onSort('term')" class="flex items-center space-x-1 group">
                         <span class="group-hover:text-gray-900">Term</span>
                         <span class="flex flex-col">
@@ -333,7 +381,7 @@
                     </th>
                   }
                   @if (visibleColumns().name) { 
-                    <th scope="col" class="px-6 py-3">
+                    <th scope="col" class="px-4 py-2">
                       <button (click)="onSort('name')" class="flex items-center space-x-1 group">
                         <span class="group-hover:text-gray-900">Name</span>
                         <span class="flex flex-col">
@@ -348,7 +396,7 @@
                     </th>
                   }
                   @if (visibleColumns().status) { 
-                    <th scope="col" class="px-6 py-3">
+                    <th scope="col" class="px-4 py-2">
                       <button (click)="onSort('status')" class="flex items-center space-x-1 group">
                         <span class="group-hover:text-gray-900">Status</span>
                         <span class="flex flex-col">
@@ -363,7 +411,7 @@
                     </th>
                   }
                   @if (visibleColumns().editors) { 
-                    <th scope="col" class="px-6 py-3">
+                    <th scope="col" class="px-4 py-2">
                       <button (click)="onSort('editors')" class="flex items-center space-x-1 group">
                         <span class="group-hover:text-gray-900">Editors</span>
                         <span class="flex flex-col">
@@ -378,7 +426,7 @@
                     </th>
                   }
                   @if (visibleColumns().type) { 
-                    <th scope="col" class="px-6 py-3">
+                    <th scope="col" class="px-4 py-2">
                       <button (click)="onSort('type')" class="flex items-center space-x-1 group">
                         <span class="group-hover:text-gray-900">Type</span>
                         <span class="flex flex-col">
@@ -397,13 +445,13 @@
               <tbody>
                 @for (doc of paginatedDocuments(); track doc.id) {
                   <tr class="bg-white border-b hover:bg-gray-50 transition-colors duration-200">
-                    <td class="px-6 py-4">
+                    <td class="px-4 py-3">
                       <div class="relative inline-flex rounded shadow-sm action-dropdown-container">
-                        <button (click)="editDocument(doc)" class="w-16 text-center bg-pink-600 text-white text-xs font-medium px-3 py-1.5 rounded-l hover:bg-pink-700 focus:z-10 focus:ring-2 focus:ring-pink-500 transition-colors">
+                        <button (click)="editDocument(doc)" class="w-14 text-center bg-pink-600 text-white text-xs font-medium px-2.5 py-1.5 rounded-l hover:bg-pink-700 focus:z-10 focus:ring-2 focus:ring-pink-500 transition-colors">
                           {{ doc.status === 'Awaiting Approval' ? 'Review' : 'Edit' }}
                         </button>
                         <button (click)="toggleActionDropdown($event, doc.id)" class="bg-pink-600 text-white px-1 py-1.5 rounded-r border-l border-pink-500 hover:bg-pink-700 focus:z-10 focus:ring-2 focus:ring-pink-500 transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06z" clip-rule="evenodd" />
                           </svg>
                         </button>
@@ -415,7 +463,7 @@
                             [class.invisible]="actionDropdownOpen() !== doc.id">
                           <ul class="py-1">
                             <li>
-                              <button (click)="toggleActivation(doc)" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                              <button (click)="toggleActivation(doc)" class="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors">
                                 {{ doc.status === 'Inactive' ? 'Activate' : 'Deactivate' }}
                               </button>
                             </li>
@@ -423,20 +471,17 @@
                         </div>
                       </div>
                     </td>
-                    @if (visibleColumns().term) { <td class="px-6 py-4 font-medium text-gray-900">{{ doc.term }}</td> }
-                    @if (visibleColumns().name) { <td class="px-6 py-4">{{ doc.name }}</td> }
+                    @if (visibleColumns().term) { <td class="px-4 py-3 font-medium text-gray-900">{{ doc.term }}</td> }
+                    @if (visibleColumns().name) { <td class="px-4 py-3">{{ doc.name }}</td> }
                     @if (visibleColumns().status) { 
-                      <td class="px-6 py-4">
-                        <span class="underline cursor-pointer flex items-center" [class]="{ 
-                          'text-green-600': doc.status === 'Completed', 
-                          'text-yellow-600': doc.status === 'Awaiting Approval',
-                          'text-blue-600': doc.status === 'In progress', 
-                          'text-red-600': doc.status === 'Not Started',
+                      <td class="px-4 py-3">
+                        <span class="underline cursor-pointer flex items-center" [class]="{
+                          'text-pink-600': doc.status === 'Completed' || doc.status === 'Awaiting Approval' || doc.status === 'In progress' || doc.status === 'Not Started',
                           'text-gray-500': doc.status === 'Inactive'
                         }">
                           {{ doc.status }}
                           @if(doc.status === 'Completed') {
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 ml-1 text-pink-500" viewBox="0 0 20 20" fill="currentColor">
                               <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5z" clip-rule="evenodd" />
                             </svg>
                           }
@@ -444,24 +489,24 @@
                       </td>
                     }
                     @if (visibleColumns().editors) { 
-                      <td class="px-6 py-4">
-                        <div class="flex items-center space-x-2">
+                      <td class="px-4 py-3">
+                        <div class="flex items-center space-x-1.5">
                           @for (editor of doc.editors; track editor.name) {
                             <div class="flex items-center">
-                              <div class="h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs" [class]="getAvatarColor(editor.name)" [title]="editor.name">
+                              <div class="h-7 w-7 rounded-full flex items-center justify-center font-bold text-[10px]" [class]="getAvatarColor(editor.name)" [title]="editor.name">
                                 {{ getInitials(editor.name) }}
                               </div>
-                              <span class="ml-2">{{ editor.name }}</span>
+                              <span class="ml-1.5 text-sm">{{ editor.name }}</span>
                             </div>
                           }
                         </div>
                       </td>
                     }
-                    @if (visibleColumns().type) { <td class="px-6 py-4 capitalize">{{ doc.type }}</td> }
+                    @if (visibleColumns().type) { <td class="px-4 py-3 capitalize">{{ doc.type }}</td> }
                   </tr>
                 } @empty {
                   <tr class="bg-white border-b">
-                    <td [attr.colspan]="visibleColumnCount() + 1" class="px-6 py-12 text-center text-gray-500">
+                    <td [attr.colspan]="visibleColumnCount() + 1" class="px-4 py-10 text-center text-gray-500">
                       <div class="flex flex-col items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6.75A2.25 2.25 0 0 1 4.5 4.5h15A2.25 2.25 0 0 1 21.75 6.75v3.026m-16.5 0h16.5" />
@@ -475,15 +520,34 @@
               </tbody>
             </table>
         </div>
-      </main>
-    }
-    @if(currentPage() === 'plan-task') {
-      <app-plan-task-editor></app-plan-task-editor>
-    }
+            </section>
+          } @else {
+            <app-plan-admin (editTask)="onPlanAdminEditTask($event)" (addTask)="onPlanAdminAddTask()"></app-plan-admin>
+          }
+        </div>
+      </div>
+    </main>
   </div>
 </div>
 
 <!-- Edit Modal -->
 @if(editingDocument(); as doc) {
   <app-edit-modal [document]="doc" (close)="closeModal()" (save)="saveDocument($event)"></app-edit-modal>
+}
+
+@if (showPlanTaskModal()) {
+  <div class="fixed inset-0 z-40 flex items-center justify-center px-3 py-6">
+    <div class="absolute inset-0 bg-gray-900/60" (click)="closePlanTaskModal()"></div>
+    <div class="relative z-10 w-full max-w-6xl max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="plan-task-modal-title">
+      <div class="flex justify-between items-center px-3 py-2.5 border-b border-gray-200">
+        <h2 id="plan-task-modal-title" class="text-lg font-semibold text-gray-900">{{ planTaskModalMode() === 'edit' ? 'Edit Plan Task' : 'Create Plan Task' }}</h2>
+        <button type="button" (click)="closePlanTaskModal()" class="p-1.5 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto">
+        <app-plan-task-editor [mode]="planTaskModalMode()" (close)="closePlanTaskModal()"></app-plan-task-editor>
+      </div>
+    </div>
+  </div>
 }
