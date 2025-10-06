@@ -1,241 +1,290 @@
-<div class="bg-white shadow-lg rounded-lg border border-gray-200 h-full flex flex-col">
-  <!-- Header -->
-  <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-    <h2 class="text-lg font-semibold text-gray-900">Simple TA</h2>
-    <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
-      <!-- Context Scope Toggle -->
-      <div class="relative inline-flex rounded-md border border-gray-300 bg-white overflow-hidden">
-        <button type="button"
-                class="px-3 py-1.5 text-xs font-medium transition-colors"
-                [ngClass]="scopeMode() === 'all' ? 'bg-pink-600 text-white' : 'text-gray-700 hover:bg-gray-100'"
-                (click)="setScopeMode('all')" title="All Courses">All Courses</button>
-        <button type="button"
-                class="px-3 py-1.5 text-xs font-medium transition-colors border-l border-gray-300"
-                [ngClass]="scopeMode() === 'mine' ? 'bg-pink-600 text-white' : 'text-gray-700 hover:bg-gray-100'"
-                (click)="setScopeMode('mine')" title="My Courses">My Courses</button>
-      </div>
+<div class="h-full flex flex-col">
+  <div class="px-3 sm:px-4 lg:px-6 py-5 flex-1 min-h-0 overflow-hidden">
+    <div class="max-w-7xl mx-auto h-full min-h-0 flex flex-col">
+      <!-- Page Title -->
+      <h1 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        Simple TA
+      </h1>
 
-      <!-- Term Filter (always visible) -->
-      <div class="relative w-44">
-        <button type="button" (click)="toggleTermDropdown()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
-          <span class="truncate">{{ termButtonText() }}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
-        </button>
-        <div class="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left transition-all duration-200 ease-out"
-             (click)="$event.stopPropagation()"
-             [class.opacity-100]="termDropdownOpen()"
-             [class.scale-100]="termDropdownOpen()"
-             [class.opacity-0]="!termDropdownOpen()"
-             [class.scale-95]="!termDropdownOpen()"
-             [class.invisible]="!termDropdownOpen()"
-             [class.pointer-events-auto]="termDropdownOpen()"
-             [class.pointer-events-none]="!termDropdownOpen()">
-          <app-term-filter-dropdown selectionMode="multi" [selected]="selectedTerms()" (selectionChange)="onTermSelectionChange($event)"></app-term-filter-dropdown>
-        </div>
-      </div>
+      <!-- Top Controls (consistent with Document Track) -->
+      <section class="mb-3 overflow-visible">
+        <div class="flex flex-wrap items-end gap-3">
+          <!-- Scope Toggle -->
+          <div class="relative">
+            <label class="absolute -top-2 left-2 inline-block bg-white px-1 text-[10px] font-medium text-gray-900 z-10">Scope</label>
+            <div class="relative inline-flex rounded-md border border-gray-300 bg-white overflow-hidden">
+              <button type="button"
+                      class="px-3 py-2 text-xs font-medium transition-colors"
+                      [ngClass]="scopeMode() === 'all' ? 'bg-pink-600 text-white' : 'text-gray-700 hover:bg-gray-100'"
+                      (click)="setScopeMode('all')" title="All Courses">All Courses</button>
+              <button type="button"
+                      class="px-3 py-2 text-xs font-medium transition-colors border-l border-gray-300"
+                      [ngClass]="scopeMode() === 'mine' ? 'bg-pink-600 text-white' : 'text-gray-700 hover:bg-gray-100'"
+                      (click)="setScopeMode('mine')" title="My Courses">My Courses</button>
+            </div>
+          </div>
 
-      <!-- Filter button (opens sliding panel) -->
-      <button type="button" (click)="toggleAdvancedFilters()" class="relative flex items-center justify-center px-3.5 py-2.5 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-        @if (activeFilterCount() > 0) {
-          <span class="absolute -top-2 -right-2 flex items-center justify-center w-4 h-4 bg-pink-600 text-white rounded-full text-[10px]">{{ activeFilterCount() }}</span>
-        }
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5 text-gray-500"><path fill-rule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 0 1 .628.74v2.288a2.25 2.25 0 0 1-.659 1.59l-4.682 4.683a2.25 2.25 0 0 0-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 0 1 8 18.25v-5.757a2.25 2.25 0 0 0-.659-1.59L2.659 6.22A2.25 2.25 0 0 1 2 4.629V2.34a.75.75 0 0 1 .628-.74Z" clip-rule="evenodd"/></svg>
-        Filters
-      </button>
-    </div>
-  </div>
-
-  <!-- Sliding Filter Panel -->
-  <div class="transition-all duration-300 ease-in-out border-b border-gray-200 overflow-visible"
-       (click)="$event.stopPropagation()"
-       [class.max-h-96]="showAdvancedFilters()"
-       [class.max-h-0]="!showAdvancedFilters()"
-       [class.opacity-100]="showAdvancedFilters()"
-       [class.opacity-0]="!showAdvancedFilters()"
-       [class.pointer-events-auto]="showAdvancedFilters()"
-       [class.pointer-events-none]="!showAdvancedFilters()"
-       [class.pt-3]="showAdvancedFilters()">
-    <div class="px-4 pb-3 space-y-3">
-
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <!-- Organization -->
-        <div class="relative">
-          <button type="button" (click)="toggleOrganizationDropdown()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
-            <span class="truncate flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-gray-500">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
-              </svg>
-              {{ organizationFilter() || 'Organization' }}
-            </span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
-          </button>
-          <div class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-40 border border-gray-200" (click)="$event.stopPropagation()" [class.hidden]="!showOrganizationDropdown()">
-            <div class="p-2 border-b border-gray-200">
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg></span>
-                <input type="text" placeholder="Search organizations..." class="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" (input)="onOrganizationSearch($event)">
+          <!-- Term Filter -->
+          <div class="relative w-full sm:w-auto sm:flex-1 md:max-w-xs">
+            <label for="ta-term-filter-button" class="absolute -top-2 left-2 inline-block bg-white px-1 text-[10px] font-medium text-gray-900 z-10">Term</label>
+            <div class="relative">
+              <button id="ta-term-filter-button" type="button" (click)="toggleTermDropdown(); $event.stopPropagation()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
+                <span class="truncate">{{ termButtonText() }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
+              </button>
+              <div class="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left transition-all duration-200 ease-out"
+                  (click)="$event.stopPropagation()"
+                  [class.opacity-100]="termDropdownOpen()"
+                  [class.scale-100]="termDropdownOpen()"
+                  [class.opacity-0]="!termDropdownOpen()"
+                  [class.scale-95]="!termDropdownOpen()"
+                  [class.invisible]="!termDropdownOpen()"
+                  [class.pointer-events-auto]="termDropdownOpen()"
+                  [class.pointer-events-none]="!termDropdownOpen()">
+                <app-term-filter-dropdown selectionMode="multi" [selected]="selectedTerms()" (selectionChange)="onTermSelectionChange($event)"></app-term-filter-dropdown>
               </div>
             </div>
-            <ul class="py-1 max-h-60 overflow-y-auto">
-              <li><button (click)="selectOrganization('')" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">All Organizations</button></li>
-              @for(org of filteredFlatOrganizationHierarchy(); track org.name) {
-                <li>
-                  <button (click)="selectOrganization(org.name)"
-                          class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
-                          [style.padding-left]="(0.75 + org.level * 1.2) + 'rem'">
-                    {{ org.name }}
-                  </button>
-                </li>
-              } @empty {
-                <li><span class="block px-3 py-1.5 text-xs text-gray-500">No organizations found.</span></li>
-              }
-            </ul>
           </div>
+
+          <!-- Open Advanced Filters -->
+          <button type="button" (click)="toggleAdvancedFilters()" class="relative flex items-center justify-center px-3.5 py-2.5 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            @if (activeFilterCount() > 0) {
+              <span class="absolute -top-2 -right-2 flex items-center justify-center w-4 h-4 bg-pink-600 text-white rounded-full text-[10px]">{{ activeFilterCount() }}</span>
+            }
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5 text-gray-500"><path fill-rule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 0 1 .628.74v2.288a2.25 2.25 0 0 1-.659 1.59l-4.682 4.683a2.25 2.25 0 0 0-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 0 1 8 18.25v-5.757a2.25 2.25 0 0 0-.659-1.59L2.659 6.22A2.25 2.25 0 0 1 2 4.629V2.34a.75.75 0 0 1 .628-.74Z" clip-rule="evenodd"/></svg>
+            Filters
+          </button>
         </div>
 
-        <!-- Subject -->
-        <div class="relative">
-          <button type="button" (click)="toggleSubjectDropdown()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
-            <span class="truncate flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-gray-500">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-              </svg>
-              {{ subjectFilter() || 'Subject' }}
-            </span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
-          </button>
-          <div class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-40 border border-gray-200" (click)="$event.stopPropagation()" [class.hidden]="!showSubjectDropdown()">
-            <div class="p-2 border-b border-gray-200">
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg></span>
-                <input type="text" placeholder="Search subjects..." class="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" (input)="onSubjectSearch($event)">
-              </div>
-            </div>
-            <ul class="py-1 max-h-60 overflow-y-auto">
-              <li><button (click)="selectSubject('')" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">All Subjects</button></li>
-              @for(subject of filteredSubjects(); track subject) {
-                <li><button (click)="selectSubject(subject)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">{{ subject }}</button></li>
-              } @empty {
-                <li><span class="block px-3 py-1.5 text-xs text-gray-500">No subjects found.</span></li>
-              }
-            </ul>
-          </div>
-        </div>
-
-        <!-- Course (combined: course + sections) -->
-        <div class="relative">
-          <button type="button" (click)="toggleCourseDropdown()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
-            <span class="truncate flex items-center">
-              <span class="material-symbols-outlined text-[20px] leading-none mr-2 text-gray-500">school</span>
-              {{ selectedCourses().length || selectedSections().length ? (selectedCourses().concat(selectedSections())).join(', ') : 'Course' }}
-            </span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
-          </button>
-          <div class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-40 border border-gray-200" (click)="$event.stopPropagation()" [class.hidden]="!showCourseDropdown()">
-            <ul class="py-1 max-h-72 overflow-y-auto">
-              @for (code of courseOptions(); track code) {
-                <li class="px-2 py-1">
-                  <div class="flex items-center">
-                    <button type="button" class="p-1 mr-1 rounded hover:bg-gray-100" (click)="toggleCourseExpanded(code); $event.stopPropagation()">
-                      <span class="material-symbols-outlined text-[16px] text-gray-500">{{ isCourseExpanded(code) ? 'expand_less' : 'expand_more' }}</span>
-                    </button>
-                    <label class="flex items-center px-1.5 py-1 text-xs text-gray-800 cursor-pointer hover:bg-gray-100 rounded flex-1">
-                      <input type="checkbox" class="sr-only" [checked]="isCourseCodeSelected(code)" (change)="toggleCourseCode(code)">
-                      <div class="w-4 h-4 mr-2 flex items-center justify-center border-2 rounded" [class]="isCourseCodeSelected(code) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-300'">
-                        @if (isCourseCodeSelected(code)) { <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> }
-                      </div>
-                      <span class="truncate font-medium">{{ code }}</span>
-                    </label>
+        <!-- Advanced Filters (collapsible) -->
+        <div class="transition-all duration-300 ease-in-out"
+            [class.max-h-80]="showAdvancedFilters()"
+            [class.max-h-0]="!showAdvancedFilters()"
+            [class.opacity-100]="showAdvancedFilters()"
+            [class.opacity-0]="!showAdvancedFilters()"
+            [class.pt-3]="showAdvancedFilters()">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <!-- Organization -->
+            <div class="relative">
+              <button type="button" (click)="toggleOrganizationDropdown(); $event.stopPropagation()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
+                <span class="truncate flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-gray-500">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+                  </svg>
+                  {{ organizationFilter() || 'Organization' }}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
+              </button>
+              <div class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-40 border border-gray-200" (click)="$event.stopPropagation()" [class.hidden]="!showOrganizationDropdown()">
+                <div class="p-2 border-b border-gray-200">
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg></span>
+                    <input type="text" placeholder="Search organizations..." class="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" (input)="onOrganizationSearch($event)">
                   </div>
-                  <div class="ml-6 mt-1 flex gap-3 text-[11px]">
-                    <button type="button" class="text-pink-700 hover:underline" (click)="selectAllSectionsForCourse(code); $event.stopPropagation()">Select all sections</button>
-                    <button type="button" class="text-gray-600 hover:underline" (click)="clearSectionsForCourse(code); $event.stopPropagation()">Clear</button>
-                  </div>
-                  @if (isCourseExpanded(code)) {
-                    <ul class="mt-0.5 ml-6">
-                      @for (sec of sectionsForCourse(code); track sec) {
-                        <li>
-                          <label class="flex items-center px-1.5 py-1 text-[11px] text-gray-700 cursor-pointer hover:bg-gray-50 rounded">
-                            <input type="checkbox" class="sr-only" [checked]="isSectionSelected(sec)" (change)="toggleSection(sec)">
-                            <div class="w-4 h-4 mr-2 flex items-center justify-center border-2 rounded" [class]="isSectionSelected(sec) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-300'">
-                              @if (isSectionSelected(sec)) { <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> }
-                            </div>
-                            <span class="truncate">{{ sec }}</span>
-                          </label>
-                        </li>
-                      }
-                    </ul>
-                  }
-                </li>
-              }
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Body: Threads + Chat -->
-  <div class="flex-1 min-h-0 flex">
-    <!-- Threads panel -->
-    <aside class="w-64 border-r border-gray-200 bg-gray-50 flex flex-col">
-      <div class="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
-        <div class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Threads</div>
-        <button type="button" (click)="newThread()" class="inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium text-white bg-pink-600 hover:bg-pink-700">
-          <span class="text-base leading-none">+</span>
-          New
-        </button>
-      </div>
-      <div class="flex-1 overflow-y-auto p-2 space-y-1">
-        @for (t of threads(); track t.id) {
-          <button type="button" (click)="selectThread(t.id)"
-                  class="w-full text-left px-2.5 py-2 rounded-md text-sm flex items-center justify-between transition-colors"
-                  [ngClass]="selectedThreadId() === t.id ? 'bg-pink-50 text-pink-700' : 'text-gray-700 hover:bg-gray-100'">
-            <span class="truncate">{{ t.title }}</span>
-            <span class="ml-2 text-[10px]" [class.text-pink-600]="selectedThreadId() === t.id">{{ t.messages.length }}</span>
-          </button>
-        } @empty { <div class="px-3 py-2 text-xs text-gray-500">No threads yet.</div> }
-      </div>
-    </aside>
-
-    <!-- Chat area -->
-    <div class="flex-1 flex flex-col">
-      <!-- Messages -->
-      <div #messagesContainer class="flex-1 min-h-0 overflow-y-auto p-4 relative">
-        @if (!selectedThreadId()) {
-          <div class="h-full flex items-center justify-center">
-            <div class="text-center text-gray-600">
-              <div class="mx-auto mb-3 h-12 w-12 rounded-full bg-pink-600 text-white flex items-center justify-center shadow">
-                <span class="material-symbols-outlined text-[24px] leading-none">smart_toy</span>
-              </div>
-              <div class="text-sm font-semibold">Welcome to your AI Teaching Assistant</div>
-            </div>
-          </div>
-        } @else {
-          <div class="space-y-4">
-            @for (m of messages(); track m.ts) {
-              <div class="flex items-start gap-2" [ngClass]="m.role === 'user' ? 'flex-row-reverse' : 'flex-row'">
-                <!-- Avatar -->
-                <div class="flex-shrink-0">
-                  @if (m.role === 'assistant') {
-                    <div class="h-8 w-8 rounded-full bg-pink-600 text-white flex items-center justify-center">
-                      <span class="material-symbols-outlined text-[18px] leading-none">smart_toy</span>
-                    </div>
-                  } @else {
-                    <div class="h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold" [class]="getAvatarColor(currentStudentName())" [title]="currentStudentName()">
-                      {{ getInitials(currentStudentName()) }}
-                    </div>
-                  }
                 </div>
-                <div class="max-w-[75%]">
-                  <div class="text-[10px] text-gray-500 mb-0.5" [ngClass]="m.role === 'user' ? 'text-right' : 'text-left'">
-                    {{ m.role === 'user' ? currentStudentName() : 'Simple TA' }} · {{ formatTime(m.ts) }}
+                <ul class="py-1 max-h-60 overflow-y-auto">
+                  <li><button (click)="selectOrganization('')" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">All Organizations</button></li>
+                  @for(org of filteredFlatOrganizationHierarchy(); track org.name) {
+                    <li>
+                      <button (click)="selectOrganization(org.name)"
+                              class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                              [style.padding-left]="(0.75 + org.level * 1.2) + 'rem'">
+                        {{ org.name }}
+                      </button>
+                    </li>
+                  } @empty {
+                    <li><span class="block px-3 py-1.5 text-xs text-gray-500">No organizations found.</span></li>
+                  }
+                </ul>
+              </div>
+            </div>
+
+            <!-- Subject -->
+            <div class="relative">
+              <button type="button" (click)="toggleSubjectDropdown(); $event.stopPropagation()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
+                <span class="truncate flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-gray-500">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                  </svg>
+                  {{ subjectFilter() || 'Subject' }}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
+              </button>
+              <div class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-40 border border-gray-200" (click)="$event.stopPropagation()" [class.hidden]="!showSubjectDropdown()">
+                <div class="p-2 border-b border-gray-200">
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg></span>
+                    <input type="text" placeholder="Search subjects..." class="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" (input)="onSubjectSearch($event)">
                   </div>
-                  <div class="rounded-2xl px-3 py-2 text-sm shadow-sm" [ngClass]="m.role === 'user' ? 'bg-pink-100 text-pink-900' : 'bg-gray-100 text-gray-900'">
-                    <p class="whitespace-pre-wrap">{{ m.text }}</p>
+                </div>
+                <ul class="py-1 max-h-60 overflow-y-auto">
+                  <li><button (click)="selectSubject('')" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">All Subjects</button></li>
+                  @for(subject of filteredSubjects(); track subject) {
+                    <li><button (click)="selectSubject(subject)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">{{ subject }}</button></li>
+                  } @empty {
+                    <li><span class="block px-3 py-1.5 text-xs text-gray-500">No subjects found.</span></li>
+                  }
+                </ul>
+              </div>
+            </div>
+
+            <!-- Course/Section -->
+            <div class="relative">
+              <button type="button" (click)="toggleCourseDropdown(); $event.stopPropagation()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
+                <span class="truncate flex items-center">
+                  <span class="material-symbols-outlined text-[20px] leading-none mr-2 text-gray-500">school</span>
+                  {{ selectedCourses().length || selectedSections().length ? (selectedCourses().concat(selectedSections())).join(', ') : 'Course' }}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
+              </button>
+              <div class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-40 border border-gray-200" (click)="$event.stopPropagation()" [class.hidden]="!showCourseDropdown()">
+                <ul class="py-1 max-h-72 overflow-y-auto">
+                  @for (code of courseOptions(); track code) {
+                    <li class="px-2 py-1">
+                      <div class="flex items-center">
+                        <button type="button" class="p-1 mr-1 rounded hover:bg-gray-100" (click)="toggleCourseExpanded(code); $event.stopPropagation()">
+                          <span class="material-symbols-outlined text-[16px] text-gray-500">{{ isCourseExpanded(code) ? 'expand_less' : 'expand_more' }}</span>
+                        </button>
+                        <label class="flex items-center px-1.5 py-1 text-xs text-gray-800 cursor-pointer hover:bg-gray-100 rounded flex-1">
+                          <input type="checkbox" class="sr-only" [checked]="isCourseCodeSelected(code)" (change)="toggleCourseCode(code)">
+                          <div class="w-4 h-4 mr-2 flex items-center justify-center border-2 rounded" [class]="isCourseCodeSelected(code) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-300'">
+                            @if (isCourseCodeSelected(code)) { <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> }
+                          </div>
+                          <span class="truncate font-medium">{{ code }}</span>
+                        </label>
+                      </div>
+                      <div class="ml-6 mt-1 flex gap-3 text-[11px]">
+                        <button type="button" class="text-pink-700 hover:underline" (click)="selectAllSectionsForCourse(code); $event.stopPropagation()">Select all sections</button>
+                        <button type="button" class="text-gray-600 hover:underline" (click)="clearSectionsForCourse(code); $event.stopPropagation()">Clear</button>
+                      </div>
+                      @if (isCourseExpanded(code)) {
+                        <ul class="mt-0.5 ml-6">
+                          @for (sec of sectionsForCourse(code); track sec) {
+                            <li>
+                              <label class="flex items-center px-1.5 py-1 text-[11px] text-gray-700 cursor-pointer hover:bg-gray-50 rounded">
+                                <input type="checkbox" class="sr-only" [checked]="isSectionSelected(sec)" (change)="toggleSection(sec)">
+                                <div class="w-4 h-4 mr-2 flex items-center justify-center border-2 rounded" [class]="isSectionSelected(sec) ? 'bg-pink-600 border-pink-600' : 'bg-white border-gray-300'">
+                                  @if (isSectionSelected(sec)) { <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> }
+                                </div>
+                                <span class="truncate">{{ sec }}</span>
+                              </label>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Content: Threads Table and Chat Panel -->
+      <section class="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden">
+        <!-- Threads Card (table-like) -->
+        <div class="bg-white shadow-lg rounded-lg border border-gray-200 flex flex-col w-full lg:w-[320px] flex-shrink-0">
+          <div class="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
+            <div class="text-sm font-semibold text-gray-700">Threads</div>
+            <button type="button" (click)="newThread()" class="relative z-10 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-white bg-pink-600 hover:bg-pink-700">
+              <span class="text-base leading-none">+</span>
+              New
+            </button>
+          </div>
+          <div class="flex-1 min-h-0 overflow-y-auto">
+            <table class="w-full text-sm text-left text-gray-600">
+                            <tbody>
+                @for (t of threads(); track t.id) {
+                  <tr class="bg-white border-b hover:bg-gray-50 transition-colors duration-200 cursor-pointer group" (click)="selectThread(t.id)" [ngClass]="selectedThreadId() === t.id ? 'bg-pink-50' : ''">
+                    <td class="px-4 py-2 font-medium text-gray-900 pr-20">{{ t.title && t.title.length > 60 ? (t.title | slice:0:60) + '…' : t.title }}</td>
+                    <td class="px-4 py-2 text-right opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div class="flex items-center justify-end gap-1">
+                        <button type="button" (click)="startRenameThread(t.id, $event)" class="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded" title="Rename thread">
+                          <span class="material-symbols-outlined text-[16px] leading-none">edit</span>
+                        </button>
+                        <button type="button" (click)="deleteThread(t.id, $event)" class="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded" title="Delete thread">
+                          <span class="material-symbols-outlined text-[16px] leading-none">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr class="bg-white border-b">
+                    <td colspan="2" class="px-4 py-6 text-center text-gray-500">No threads yet.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Chat Card -->
+        <div class="bg-white shadow-lg rounded-lg border border-gray-200 flex flex-col min-h-0 flex-1">
+          <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[20px] leading-none text-pink-600">smart_toy</span>
+              <h2 class="text-sm font-semibold text-gray-900">Conversation</h2>
+              @if (selectedThreadId()) { <span class="text-xs text-gray-500">· Active thread</span> }
+            </div>
+          </div>
+
+          <!-- Messages List (structured, less "bubble" and more transcript) -->
+          <div #messagesContainer class="flex-1 min-h-0 overflow-y-auto">
+            @if (showWelcomeInterface()) {
+              <div class="h-full flex items-center justify-center p-4 sm:p-6 lg:p-8">
+                <div class="text-center max-w-md sm:max-w-lg w-full">
+                  <!-- Large TA Icon with responsive sizing -->
+                  <div class="mx-auto mb-4 sm:mb-6 h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 rounded-full bg-pink-600 text-white flex items-center justify-center shadow-lg">
+                    <span class="material-symbols-outlined text-[32px] sm:text-[40px] lg:text-[48px] leading-none">smart_toy</span>
+                  </div>
+                  
+                  <!-- Welcome Message with responsive typography -->
+                  <div class="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 mb-6 sm:mb-8 px-2">
+                    Hello, I am your AI teaching assistant. Ask me anything.
+                  </div>
+                  
+                  <!-- Suggestion Options with responsive spacing and sizing -->
+                  <div class="space-y-2 sm:space-y-3">
+                    <button type="button"
+                            (click)="handleSuggestionClick('Ask a question about my current courses')"
+                            class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
+                      <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">school</span>
+                      <span class="truncate">Ask a question about my current courses</span>
+                    </button>
+                    
+                    <button type="button"
+                            (click)="handleSuggestionClick('Ask a question about my past courses')"
+                            class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
+                      <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">history</span>
+                      <span class="truncate">Ask a question about my past courses</span>
+                    </button>
+                    
+                    <button type="button"
+                            (click)="handleSuggestionClick('Ask a question about courses I may want to take in the future')"
+                            class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
+                      <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">trending_up</span>
+                      <span class="truncate">Ask a question about courses I may want to take in the future</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="divide-y divide-gray-100">
+                @for (m of messages(); track m.ts) {
+                  <div class="px-4 py-3">
+                    <div class="flex items-center gap-2 text-[11px] text-gray-500 mb-1">
+                      <span class="inline-flex items-center gap-1 font-medium text-gray-700">
+                        @if (m.role === 'assistant') { <span class="material-symbols-outlined text-[16px] text-pink-600">smart_toy</span> } @else {
+                          <span class="h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold" [class]="getAvatarColor(currentStudentName())" [title]="currentStudentName()">{{ getInitials(currentStudentName()) }}</span>
+                        }
+                        {{ m.role === 'user' ? currentStudentName() : 'Simple TA' }}
+                      </span>
+                      <span>· {{ formatTime(m.ts) }}</span>
+                    </div>
+                    <div class="text-sm text-gray-900 whitespace-pre-wrap">{{ m.text }}</div>
                     @if (m.citations?.length) {
-                      <div class="mt-1 flex flex-wrap gap-1">
+                      <div class="mt-2 flex flex-wrap gap-1.5">
                         @for (c of m.citations; track c.docId) {
                           <button type="button" (click)="openCitation(c.docId, c.label)" class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium bg-gray-50 text-gray-700 hover:bg-pink-50 hover:text-pink-700 border border-gray-200">
                             <span class="material-symbols-outlined text-[14px] leading-none">open_in_new</span>
@@ -245,55 +294,119 @@
                       </div>
                     }
                   </div>
-                </div>
-              </div>
-            }
+                }
 
-            <!-- Typing/Thinking Indicator -->
-            @if (sending()) {
-              <div class="flex items-start gap-2">
-                <div class="h-8 w-8 rounded-full bg-pink-600 text-white flex items-center justify-center">
-                  <span class="material-symbols-outlined text-[18px] leading-none">smart_toy</span>
-                </div>
-                <div class="rounded-2xl px-3 py-2 text-sm bg-gray-100 text-gray-500 shadow-sm animate-pulse">
-                  Simple TA is thinking...
-                </div>
+                <!-- Typing/Thinking Indicator -->
+                @if (sending()) {
+                  <div class="px-4 py-3 text-sm text-gray-500">Simple TA is thinking...</div>
+                }
               </div>
             }
           </div>
-        }
-      </div>
 
+          <!-- Quick Prompts -->
+          <div class="px-4 pt-2 pb-1 border-t border-gray-100">
+            <div class="flex flex-wrap gap-2">
+              @for (qp of quickPrompts; track qp) {
+                <button type="button" (click)="quickPromptClick(qp)" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-pink-50 text-pink-700 hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-500">
+                  <span class="material-symbols-outlined text-[16px] leading-none">bolt</span>
+                  {{ qp }}
+                </button>
+              }
+            </div>
+          </div>
 
-      <!-- Quick prompts -->
-      <div class="px-4 pt-2 pb-1 border-t border-gray-100">
-        <div class="flex flex-wrap gap-2">
-          @for (qp of quickPrompts; track qp) {
-            <button type="button" (click)="quickPromptClick(qp)" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-pink-50 text-pink-700 hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-500">
-              <span class="material-symbols-outlined text-[16px] leading-none">bolt</span>
-              {{ qp }}
-            </button>
-          }
+          <!-- Composer -->
+          <div class="px-4 py-3 border-t border-gray-200">
+            <form (submit)="$event.preventDefault(); sendPrompt();" class="flex items-stretch gap-2">
+              <div class="flex-1">
+                <label for="simple-ta-input" class="sr-only">Message Simple TA</label>
+                <input id="simple-ta-input" type="text" class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ask a question about your course..." [value]="input()" (input)="input.set(($any($event.target)).value)" [disabled]="sending()" />
+              </div>
+              <button type="submit" [disabled]="sending() || !input().trim().length" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-1 focus:ring-offset-white">
+                <span class="material-symbols-outlined text-[18px] leading-none">send</span>
+                Send
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
-
-      <!-- Composer -->
-      <div class="px-4 py-3 border-t border-gray-200">
-        <form (submit)="$event.preventDefault(); sendPrompt();" class="flex items-stretch gap-2">
-          <div class="flex-1">
-            <label for="simple-ta-input" class="sr-only">Message Simple TA</label>
-            <input id="simple-ta-input" type="text" class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ask a question about your course..." [value]="input()" (input)="input.set(($any($event.target)).value)" [disabled]="sending()" />
-          </div>
-          <button type="submit" [disabled]="sending() || !input().trim().length" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-1 focus:ring-offset-white">
-            <span class="material-symbols-outlined text-[18px] leading-none">send</span>
-            Send
-          </button>
-        </form>
-      </div>
+      </section>
     </div>
   </div>
 </div>
 
+<!-- Rename Thread Modal -->
+@if (renameModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/40" (click)="cancelRename()"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl w-[90vw] max-w-md overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+        <div class="text-sm font-semibold text-gray-900">Rename Thread</div>
+        <button class="p-1 rounded-md hover:bg-gray-100" (click)="cancelRename()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="p-4">
+        <form (submit)="$event.preventDefault(); saveRename()">
+          <div class="mb-4">
+            <label for="thread-title-input" class="block text-sm font-medium text-gray-700 mb-2">Thread Title</label>
+            <input id="thread-title-input" type="text" 
+                   class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                   [value]="renameTitle()" 
+                   (input)="renameTitle.set(($any($event.target)).value)"
+                   placeholder="Enter thread title..."
+                   autofocus>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" (click)="cancelRename()" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit" [disabled]="!renameTitle().trim()" class="px-3 py-2 text-sm font-medium text-white bg-pink-600 rounded-md hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (deleteModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/40" (click)="cancelDelete()"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl w-[90vw] max-w-md overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+        <div class="text-sm font-semibold text-gray-900">Delete Thread</div>
+        <button class="p-1 rounded-md hover:bg-gray-100" (click)="cancelDelete()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="p-4">
+        <div class="mb-4">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+              <span class="material-symbols-outlined text-red-600">delete</span>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-gray-900">Are you sure?</div>
+              <div class="text-xs text-gray-500">This action cannot be undone.</div>
+            </div>
+          </div>
+          @if (threadToDelete()) {
+            <div class="text-sm text-gray-600">
+              You are about to delete the thread: <strong>"{{ threadToDelete()?.title }}"</strong>
+            </div>
+          }
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" (click)="cancelDelete()" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+            Cancel
+          </button>
+          <button type="button" (click)="confirmDelete()" class="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Syllabus Modal -->
 @if (modalOpen()) {
@@ -315,8 +428,8 @@
               <div class="space-y-3">
                 @for (comp of modalDoc()?.syllabusDetails?.components; track comp.name) {
                   <div [attr.id]="'comp-' + slugify(comp.name || '')"
-                       [class]="(highlightKey() && comp.name?.toLowerCase().includes(highlightKey().toLowerCase())) ? 'ring-2 ring-pink-500 rounded-lg' : ''"
-                       class="bg-gray-50 rounded-lg p-3">
+                      [class]="(highlightKey() && comp.name?.toLowerCase().includes(highlightKey().toLowerCase())) ? 'ring-2 ring-pink-500 rounded-lg' : ''"
+                      class="bg-gray-50 rounded-lg p-3">
                     <div class="text-sm font-semibold text-gray-800 mb-1">{{ comp.name }}</div>
                     <div class="prose prose-sm max-w-none text-gray-700" [innerHTML]="comp.content"></div>
                   </div>

@@ -59,6 +59,17 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   expandedCourses = signal<string[]>([]);
 
   // Threads
+  selectedThreadId = signal<number | null>(null);
+
+  // Rename modal state
+  renameModalOpen = signal(false);
+  renameThreadId = signal<number | null>(null);
+  renameTitle = signal('');
+
+  // Delete modal state
+  deleteModalOpen = signal(false);
+  threadToDelete = signal<Thread | null>(null);
+
   // Syllabus modal state
   modalOpen = signal(false);
   modalDocId = signal<number | null>(null);
@@ -83,7 +94,6 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
       { role: 'assistant', text: 'Participation often counts 10–15% and is detailed under "Grading scheme" in each syllabus.', ts: Date.now() - 1000 * 60 * 18 },
     ]},
   ]);
-  selectedThreadId = signal<number | null>(null);
 
   // Chat state (current conversation view)
   messages = signal<ChatMessage[]>([]);
@@ -205,6 +215,15 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     return count;
   });
 
+  // Computed property to determine when to show the welcome interface
+  showWelcomeInterface = computed(() => {
+    const threadId = this.selectedThreadId();
+    const messagesLength = this.messages().length;
+    
+    // Show when no thread is selected or when a thread has no messages
+    return !threadId || messagesLength === 0;
+  });
+
   ngOnInit(): void {
     // Default terms to Current on first load
     const currentTerms = this.documentService.termsByGroup().Current;
@@ -230,11 +249,17 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   // --- Threads ---
   newThread() {
     const id = Math.max(0, ...this.threads().map(t => t.id)) + 1;
-    const starter: ChatMessage = { role: 'assistant', text: this.welcomeText(), ts: Date.now() };
-    const t: Thread = { id, title: 'New thread', messages: [starter] };
+    
+    // Create empty thread without welcome message so our enhanced welcome UI shows
+    const t: Thread = { id, title: 'New thread', messages: [] };
     this.threads.update(list => [t, ...list]);
+    
     this.selectedThreadId.set(id);
-    this.messages.set([starter]);
+    this.messages.set([]);
+    
+    // Reset manual scroll and auto-scroll to bottom when creating a new thread
+    this.userManuallyScrolled.set(false);
+    this.triggerAutoScroll();
     this.persistThreadsSnapshot();
     this.closeAllDropdowns();
   }
@@ -269,8 +294,81 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     this.selectedThreadId.set(id);
     const t = this.threads().find(x => x.id === id);
     if (t) this.messages.set([...t.messages]);
+    // Ensure we start at the most recent message when opening a thread
+    this.userManuallyScrolled.set(false);
+    this.triggerAutoScroll();
     this.persistThreadsSnapshot();
     this.closeAllDropdowns();
+  }
+
+  // --- Thread Management: Rename & Delete ---
+  startRenameThread(threadId: number, event: MouseEvent) {
+    event.stopPropagation(); // Prevent row selection
+    const thread = this.threads().find(t => t.id === threadId);
+    if (thread) {
+      this.renameThreadId.set(threadId);
+      this.renameTitle.set(thread.title);
+      this.renameModalOpen.set(true);
+    }
+  }
+
+  saveRename() {
+    const threadId = this.renameThreadId();
+    const newTitle = this.renameTitle().trim();
+    
+    if (threadId && newTitle) {
+      this.threads.update(list => 
+        list.map(t => t.id === threadId ? { ...t, title: newTitle } : t)
+      );
+      this.persistThreadsSnapshot();
+      
+      // If this is the currently selected thread, update the messages reference
+      if (this.selectedThreadId() === threadId) {
+        const t = this.threads().find(x => x.id === threadId);
+        if (t) this.messages.set([...t.messages]);
+      }
+    }
+    
+    this.cancelRename();
+  }
+
+  cancelRename() {
+    this.renameModalOpen.set(false);
+    this.renameThreadId.set(null);
+    this.renameTitle.set('');
+  }
+
+  deleteThread(threadId: number, event: MouseEvent) {
+    event.stopPropagation(); // Prevent row selection
+    const thread = this.threads().find(t => t.id === threadId);
+    if (thread) {
+      this.threadToDelete.set(thread);
+      this.deleteModalOpen.set(true);
+    }
+  }
+
+  confirmDelete() {
+    const threadToDelete = this.threadToDelete();
+    if (threadToDelete) {
+      const threadId = threadToDelete.id;
+      
+      // Remove the thread
+      this.threads.update(list => list.filter(t => t.id !== threadId));
+      this.persistThreadsSnapshot();
+      
+      // If the deleted thread was selected, clear selection and messages
+      if (this.selectedThreadId() === threadId) {
+        this.selectedThreadId.set(null);
+        this.messages.set([]);
+      }
+    }
+    
+    this.cancelDelete();
+  }
+
+  cancelDelete() {
+    this.deleteModalOpen.set(false);
+    this.threadToDelete.set(null);
   }
 
   // --- Scope & Filters ---
@@ -316,7 +414,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
 
     // Push user message
     const userMsg: ChatMessage = { role: 'user', text, ts: Date.now() };
-    this.messages.update(msgs => [...msgs, userMsg]);
+    
     this.input.set('');
     this.sending.set(true);
     
@@ -336,9 +434,30 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
       this.selectedThreadId.set(id);
       tid = id;
       this.persistThreadsSnapshot();
+      // Update messages signal with the new thread's messages
+      this.messages.set([userMsg]);
     } else {
-      // If existing "New thread", auto-title from first message
-      this.threads.update(list => list.map(t => t.id === tid && (t.title === 'New thread' || t.title === '') ? { ...t, title: this.autoTitle(text) } : t));
+      // If existing empty thread or "New thread", auto-title from first message
+      const updatedThread = this.threads().find(t => t.id === tid);
+      if (updatedThread && updatedThread.messages.length === 0) {
+        // Empty thread - add user message
+        this.messages.set([userMsg]);
+        this.threads.update(list => list.map(t => {
+          if (t.id === tid) {
+            return { ...t, title: this.autoTitle(text), messages: [userMsg] };
+          }
+          return t;
+        }));
+      } else {
+        // Thread with existing messages - append user message
+        this.messages.update(msgs => [...msgs, userMsg]);
+        this.threads.update(list => list.map(t => {
+          if (t.id === tid && (t.title === 'New thread' || t.title === '')) {
+            return { ...t, title: this.autoTitle(text) };
+          }
+          return t;
+        }));
+      }
       this.persistThreadsSnapshot();
     }
 
@@ -552,6 +671,12 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
 
   quickPromptClick(prompt: string) { void this.sendPrompt(prompt); }
 
+  handleSuggestionClick(suggestion: string) {
+    // Create a new thread and send the suggestion as the first message
+    void this.sendPrompt(suggestion);
+  }
+
+
   // Mock fallback
   private async mockReply(userText: string): Promise<string> {
     await new Promise(r => setTimeout(r, 400));
@@ -572,6 +697,8 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   @HostListener('document:keydown.escape')
   onEsc() {
     if (this.modalOpen()) this.closeCitation();
+    if (this.renameModalOpen()) this.cancelRename();
+    if (this.deleteModalOpen()) this.cancelDelete();
     this.closeAllDropdowns();
   }
 
@@ -622,6 +749,9 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
           this.selectedThreadId.set(data.selectedThreadId);
           const t = this.threads().find(x => x.id === data.selectedThreadId);
           this.messages.set(t ? [...t.messages] : []);
+          // Ensure the chat view starts at the bottom on restore
+          this.userManuallyScrolled.set(false);
+          setTimeout(() => this.triggerAutoScroll(), 0);
         }
       }
     } catch {}
