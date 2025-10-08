@@ -41,4 +41,5 @@ export interface PlanTask {
   conditionFailure: ConditionResult;
   allowView: boolean;
   allowEdit: boolean;
+  active: boolean;
 }

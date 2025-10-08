@@ -186,7 +186,7 @@ User prompt: "The syllabus must have the 'Instructor Information' component, and
     return JSON.parse(jsonString) as AiResult;
   }
 
-  async generateSimpleTaReply(userPrompt: string, courseContext: string): Promise<string> {
+  async generateSimpleTaReply(userPrompt: string, courseContext: string, temperature: number = 0.3): Promise<string> {
     if (!this.ai) {
       throw new Error('AI is not configured.');
     }
@@ -206,7 +206,7 @@ User prompt: "The syllabus must have the 'Instructor Information' component, and
         }]
       }],
       generationConfig: {
-        temperature: 0.3,
+        temperature,
       }
     };
 
@@ -218,7 +218,8 @@ User prompt: "The syllabus must have the 'Instructor Information' component, and
   async generateSimpleTaReplyStream(
     userPrompt: string,
     courseContext: string,
-    onChunk: (text: string) => void
+    onChunk: (text: string) => void,
+    temperature: number = 0.3
   ): Promise<string> {
     if (!this.ai) {
       throw new Error('AI is not configured.');
@@ -236,7 +237,7 @@ User prompt: "The syllabus must have the 'Instructor Information' component, and
         role: 'user',
         parts: [{ text: `Context (course + syllabus):\n${courseContext}\n\nStudent question:\n${userPrompt}` }]
       }],
-      generationConfig: { temperature: 0.3 },
+      generationConfig: { temperature },
     };
 
     try {
@@ -264,7 +265,7 @@ User prompt: "The syllabus must have the 'Instructor Information' component, and
       // ignore and fall back
     }
 
-    const fallback = await this.generateSimpleTaReply(userPrompt, courseContext);
+    const fallback = await this.generateSimpleTaReply(userPrompt, courseContext, temperature);
     onChunk(fallback);
     return fallback;
   }

@@ -193,6 +193,7 @@ export class PlanAdminComponent {
 
   @HostListener('document:click')
   onDocumentClick(event: MouseEvent) {
+    if (!event) return;
     const target = event.target as HTMLElement;
 
     if (this.actionDropdownOpen() !== null) {

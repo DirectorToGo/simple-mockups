@@ -187,6 +187,7 @@ export class PlanTaskEditorComponent {
     conditionFailure: { type: 'Fail' },
     allowView: true,
     allowEdit: false,
+    active: true,
   };
 
   private conditionOptionsConfig: Record<ConditionGroupType, Record<string, { properties: Record<string, PropertyConfig> }>> = {
@@ -1469,6 +1470,11 @@ export class PlanTaskEditorComponent {
   }
 
   updateTaskAllowEdit(event: Event) { this.task.update(t => ({ ...t, allowEdit: (event.target as HTMLInputElement).checked })); }
+
+  updateTaskActive(event: Event) {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    this.task.update(t => ({ ...t, active: isChecked }));
+  }
   saveChanges() {
     const currentTask = this.task();
     this.planAdminService.saveActiveTask(currentTask);

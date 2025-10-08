@@ -17,6 +17,71 @@
     input[type="checkbox"], input[type="radio"] { accent-color: var(--app-primary-600); }
     button:focus, input:focus, select:focus, textarea:focus { outline-color: var(--app-primary-600); }
 
+    /* Custom range slider styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    input[type="range"]::-webkit-slider-track {
+      background: #e5e7eb;
+      height: 6px;
+      border-radius: 3px;
+    }
+
+    input[type="range"]::-moz-range-track {
+      background: #e5e7eb;
+      height: 6px;
+      border-radius: 3px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--app-primary-600);
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      margin-top: -7px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: all 0.15s ease;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      border: none;
+      background: var(--app-primary-600);
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: all 0.15s ease;
+    }
+
+    input[type="range"]:hover::-webkit-slider-thumb {
+      background: var(--app-primary-700);
+      transform: scale(1.1);
+    }
+
+    input[type="range"]:hover::-moz-range-thumb {
+      background: var(--app-primary-700);
+      transform: scale(1.1);
+    }
+
+    input[type="range"]:focus {
+      outline: none;
+    }
+
+    input[type="range"]:focus::-webkit-slider-thumb {
+      box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1);
+    }
+
+    input[type="range"]:focus::-moz-range-thumb {
+      box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1);
+    }
+
     /* Button patterns */
     .btn { display:inline-flex; align-items:center; gap:.375rem; border-radius:.375rem; font-weight:600; transition:background-color .15s ease, border-color .15s ease, color .15s ease; }
     .btn-sm { padding:.375rem .75rem; font-size:.875rem; }

@@ -1,144 +1,240 @@
 <div class="h-full flex flex-col">
   <div class="px-3 sm:px-4 lg:px-6 py-5 flex-1 min-h-0 overflow-hidden">
-    <div class="max-w-7xl mx-auto h-full min-h-0 flex flex-col">
-      <!-- Page Title -->
-      <h1 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        Simple TA
-      </h1>
+    <div class="w-full h-full min-h-0 flex flex-col">
 
-      <!-- Top Controls (consistent with Document Track) -->
-      <section class="mb-3 overflow-visible">
-        <div class="flex flex-wrap items-end gap-3">
-          <!-- Scope Toggle -->
-          <div class="relative">
-            <label class="absolute -top-2 left-2 inline-block bg-white px-1 text-[10px] font-medium text-gray-900 z-10">Scope</label>
-            <div class="relative inline-flex rounded-md border border-gray-300 bg-white overflow-hidden">
-              <button type="button"
-                      class="px-3 py-2 text-xs font-medium transition-colors"
-                      [ngClass]="scopeMode() === 'all' ? 'bg-pink-600 text-white' : 'text-gray-700 hover:bg-gray-100'"
-                      (click)="setScopeMode('all')" title="All Courses">All Courses</button>
-              <button type="button"
-                      class="px-3 py-2 text-xs font-medium transition-colors border-l border-gray-300"
-                      [ngClass]="scopeMode() === 'mine' ? 'bg-pink-600 text-white' : 'text-gray-700 hover:bg-gray-100'"
-                      (click)="setScopeMode('mine')" title="My Courses">My Courses</button>
+      <!-- Content: Bot Selection, Threads Table and Chat Panel -->
+      <section class="flex-1 min-h-0 flex flex-col lg:flex-row gap-6 overflow-hidden">
+        <!-- Left Panel: Bot Selection and Threads -->
+        <div class="bg-white shadow-lg rounded-lg border border-gray-200 flex flex-col w-full lg:w-[384px] flex-shrink-0">
+          <!-- Bot Selection Section -->
+          <div class="border-b border-gray-200">
+            
+            <div class="px-3 py-3 space-y-2">
+              @for (bot of availableBots(); track bot.id) {
+                <div class="bot-card cursor-pointer p-3 rounded-lg border transition-all duration-200"
+                     [class]="isSelectedBot(bot.id) ? 'bg-pink-50 border-pink-300 shadow-sm' : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'"
+                     (click)="selectBot(bot.id)">
+                  <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-pink-600 text-white flex items-center justify-center">
+                      <span class="material-symbols-outlined text-[16px] leading-none">smart_toy</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm font-semibold text-gray-900 truncate">{{ bot.name }}</div>
+                      @if (bot.description) {
+                        <div class="text-xs text-gray-600 mt-0.5 line-clamp-2">{{ bot.description }}</div>
+                      }
+                      <div class="flex items-center gap-2 mt-1">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                              [class]="bot.status === 'Published' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600 border border-gray-200'">
+                          {{ bot.status }}
+                        </span>
+                        <span class="text-xs text-gray-500">•</span>
+                        <span class="text-xs text-gray-500">Temp: {{ bot.temperature }}</span>
+                      </div>
+                    </div>
+                    @if (isSelectedBot(bot.id)) {
+                      <div class="flex-shrink-0">
+                        <span class="material-symbols-outlined text-[16px] text-pink-600">check_circle</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              } @empty {
+                <div class="text-center py-6 text-gray-500">
+                  <span class="material-symbols-outlined text-[32px] text-gray-400">smart_toy</span>
+                  <div class="text-sm font-medium mt-2">No bots available</div>
+                  <div class="text-xs text-gray-400 mt-1">Contact an admin to get access to TA bots</div>
+                </div>
+              }
             </div>
           </div>
 
-          <!-- Term Filter -->
-          <div class="relative w-full sm:w-auto sm:flex-1 md:max-w-xs">
-            <label for="ta-term-filter-button" class="absolute -top-2 left-2 inline-block bg-white px-1 text-[10px] font-medium text-gray-900 z-10">Term</label>
-            <div class="relative">
-              <button id="ta-term-filter-button" type="button" (click)="toggleTermDropdown(); $event.stopPropagation()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
-                <span class="truncate">{{ termButtonText() }}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
-              </button>
-              <div class="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg z-20 border border-gray-200 origin-top-left transition-all duration-200 ease-out"
-                  (click)="$event.stopPropagation()"
-                  [class.opacity-100]="termDropdownOpen()"
-                  [class.scale-100]="termDropdownOpen()"
-                  [class.opacity-0]="!termDropdownOpen()"
-                  [class.scale-95]="!termDropdownOpen()"
-                  [class.invisible]="!termDropdownOpen()"
-                  [class.pointer-events-auto]="termDropdownOpen()"
-                  [class.pointer-events-none]="!termDropdownOpen()">
-                <app-term-filter-dropdown selectionMode="multi" [selected]="selectedTerms()" (selectionChange)="onTermSelectionChange($event)"></app-term-filter-dropdown>
+          <!-- Bot-specific Threads Section -->
+          <div class="flex-1 min-h-0 flex flex-col">
+            <!-- Search Input -->
+            <div class="px-3 py-2 border-b border-gray-200">
+              <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-[16px] text-gray-400">search</span>
+                <input 
+                  type="text" 
+                  class="w-full pl-9 pr-8 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500" 
+                  placeholder="Search threads..." 
+                  [value]="searchQuery()" 
+                  (input)="searchQuery.set(($any($event.target)).value)"
+                >
+                @if (searchQuery()) {
+                  <button 
+                    type="button" 
+                    (click)="clearSearch()" 
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded"
+                    title="Clear search"
+                  >
+                    <span class="material-symbols-outlined text-[14px]">close</span>
+                  </button>
+                }
               </div>
             </div>
+            
+            <div class="flex-1 min-h-0 overflow-y-auto">
+              @for (bot of availableBots(); track bot.id) {
+                <div class="border-b border-gray-200">
+                  <!-- Bot Header with Thread Count -->
+                  <div class="bot-header cursor-pointer px-3 py-2 hover:bg-gray-50 transition-colors duration-200"
+                       (click)="toggleBotSection(bot.id)">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <div class="flex-shrink-0 w-6 h-6 rounded-full bg-pink-600 text-white flex items-center justify-center">
+                          <span class="material-symbols-outlined text-[12px] leading-none">smart_toy</span>
+                        </div>
+                        <div class="text-sm font-medium text-gray-900">{{ bot.name }}</div>
+                        <span class="text-xs text-gray-500">({{ getThreadCountForBot(bot.id) }})</span>
+                        @if (isSelectedBot(bot.id)) {
+                          <span class="material-symbols-outlined text-[14px] text-pink-600">check_circle</span>
+                        }
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <!-- New Thread Button (only show when bot is expanded) -->
+                        @if (isBotExpanded(bot.id)) {
+                          <button type="button" 
+                                  (click)="newThread(); $event.stopPropagation()"
+                                  class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-white bg-pink-600 hover:bg-pink-700">
+                            <span class="text-base leading-none">+</span>
+                            New
+                          </button>
+                        }
+                        <!-- Expand/Collapse Icon -->
+                        <span class="material-symbols-outlined text-[16px] text-gray-400 transition-transform duration-200"
+                              [class.rotate-180]="isBotExpanded(bot.id)">
+                          {{ isBotExpanded(bot.id) ? 'expand_less' : 'expand_more' }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Bot Threads (shown when expanded) -->
+                  @if (isBotExpanded(bot.id)) {
+                    <div class="bot-threads">
+                      @for (t of getFilteredThreadsForBot(bot.id); track t.id) {
+                        <div class="thread-row bg-white border-b hover:bg-gray-50 transition-colors duration-200 cursor-pointer group" 
+                             (click)="selectThread(t.id)" 
+                             [ngClass]="selectedThreadId() === t.id ? 'bg-pink-50' : ''">
+                          <div class="thread-content">
+                            <!-- Thread title with proper containment -->
+                            <div class="thread-title-container">
+                              <span class="thread-title" title="{{ t.title }}">{{ t.title }}</span>
+                            </div>
+                            
+                            <!-- Gradient overlay -->
+                            <div class="title-gradient"></div>
+                            
+                            <!-- Action buttons overlay -->
+                            <div class="thread-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <div class="flex items-center gap-1">
+                                <button type="button" (click)="startRenameThread(t.id, $event)" class="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded" title="Rename thread">
+                                  <span class="material-symbols-outlined text-[16px] leading-none">edit</span>
+                                </button>
+                                <button type="button" (click)="deleteThread(t.id, $event)" class="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded" title="Delete thread">
+                                  <span class="material-symbols-outlined text-[16px] leading-none">delete</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      } @empty {
+                        @if (searchQuery()) {
+                          <div class="thread-row bg-white border-b">
+                            <div class="thread-content text-center text-gray-500 py-6">No threads found matching "{{ searchQuery() }}".</div>
+                          </div>
+                        } @else {
+                          <div class="thread-row bg-white border-b">
+                            <div class="thread-content text-center text-gray-500 py-6">No threads yet. Start a conversation!</div>
+                          </div>
+                        }
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
           </div>
-
-          <!-- Open Advanced Filters -->
-          <button type="button" (click)="toggleAdvancedFilters()" class="relative flex items-center justify-center px-3.5 py-2.5 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-            @if (activeFilterCount() > 0) {
-              <span class="absolute -top-2 -right-2 flex items-center justify-center w-4 h-4 bg-pink-600 text-white rounded-full text-[10px]">{{ activeFilterCount() }}</span>
-            }
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1.5 text-gray-500"><path fill-rule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 0 1 .628.74v2.288a2.25 2.25 0 0 1-.659 1.59l-4.682 4.683a2.25 2.25 0 0 0-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 0 1 8 18.25v-5.757a2.25 2.25 0 0 0-.659-1.59L2.659 6.22A2.25 2.25 0 0 1 2 4.629V2.34a.75.75 0 0 1 .628-.74Z" clip-rule="evenodd"/></svg>
-            Filters
-          </button>
         </div>
 
-        <!-- Advanced Filters (collapsible) -->
-        <div class="transition-all duration-300 ease-in-out"
-            [class.max-h-80]="showAdvancedFilters()"
-            [class.max-h-0]="!showAdvancedFilters()"
-            [class.opacity-100]="showAdvancedFilters()"
-            [class.opacity-0]="!showAdvancedFilters()"
-            [class.pt-3]="showAdvancedFilters()">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <!-- Organization -->
-            <div class="relative">
-              <button type="button" (click)="toggleOrganizationDropdown(); $event.stopPropagation()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
-                <span class="truncate flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-gray-500">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
-                  </svg>
-                  {{ organizationFilter() || 'Organization' }}
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
-              </button>
-              <div class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-40 border border-gray-200" (click)="$event.stopPropagation()" [class.hidden]="!showOrganizationDropdown()">
-                <div class="p-2 border-b border-gray-200">
-                  <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg></span>
-                    <input type="text" placeholder="Search organizations..." class="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" (input)="onOrganizationSearch($event)">
-                  </div>
-                </div>
-                <ul class="py-1 max-h-60 overflow-y-auto">
-                  <li><button (click)="selectOrganization('')" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">All Organizations</button></li>
-                  @for(org of filteredFlatOrganizationHierarchy(); track org.name) {
-                    <li>
-                      <button (click)="selectOrganization(org.name)"
-                              class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
-                              [style.padding-left]="(0.75 + org.level * 1.2) + 'rem'">
-                        {{ org.name }}
-                      </button>
-                    </li>
-                  } @empty {
-                    <li><span class="block px-3 py-1.5 text-xs text-gray-500">No organizations found.</span></li>
-                  }
-                </ul>
-              </div>
-            </div>
+        <!-- Chat Card -->
+        <div class="bg-white shadow-lg rounded-lg border border-gray-200 flex flex-col min-h-0 flex-1">
 
-            <!-- Subject -->
-            <div class="relative">
-              <button type="button" (click)="toggleSubjectDropdown(); $event.stopPropagation()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
-                <span class="truncate flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2 text-gray-500">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-                  </svg>
-                  {{ subjectFilter() || 'Subject' }}
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
-              </button>
-              <div class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-40 border border-gray-200" (click)="$event.stopPropagation()" [class.hidden]="!showSubjectDropdown()">
-                <div class="p-2 border-b border-gray-200">
-                  <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg></span>
-                    <input type="text" placeholder="Search subjects..." class="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 bg-white text-gray-900" (input)="onSubjectSearch($event)">
-                  </div>
-                </div>
-                <ul class="py-1 max-h-60 overflow-y-auto">
-                  <li><button (click)="selectSubject('')" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">All Subjects</button></li>
-                  @for(subject of filteredSubjects(); track subject) {
-                    <li><button (click)="selectSubject(subject)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">{{ subject }}</button></li>
-                  } @empty {
-                    <li><span class="block px-3 py-1.5 text-xs text-gray-500">No subjects found.</span></li>
-                  }
-                </ul>
-              </div>
-            </div>
+          <!-- Context Bar (thread-scoped filters as editable chips) -->
+          <div class="px-4 py-3 border-y border-gray-200 bg-white" role="region" aria-label="Conversation context">
+            <div class="flex flex-wrap items-center gap-2 text-sm">
+              <span class="inline-flex items-center gap-1 font-semibold text-gray-900">
+                <span class="material-symbols-outlined text-[18px] leading-none text-pink-600">filter_alt</span>
+                Filters
+              </span>
+              <span class="text-gray-300">•</span>
 
-            <!-- Course/Section -->
-            <div class="relative">
-              <button type="button" (click)="toggleCourseDropdown(); $event.stopPropagation()" class="flex items-center justify-between w-full pl-3 pr-2 py-2.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 rounded-md bg-white">
-                <span class="truncate flex items-center">
-                  <span class="material-symbols-outlined text-[20px] leading-none mr-2 text-gray-500">school</span>
-                  {{ selectedCourses().length || selectedSections().length ? (selectedCourses().concat(selectedSections())).join(', ') : 'Course' }}
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" /></svg>
+              <!-- Scope Chip -->
+              <button type="button"
+                      [class]="scopeMode() === 'mine' ? 'inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-600 text-white border border-pink-700 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500' : 'inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-indigo-600 text-white border border-indigo-700 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500'"
+                      title="Toggle scope between My Courses and All Courses"
+                      (click)="setScopeMode(scopeMode() === 'mine' ? 'all' : 'mine')">
+                <span class="material-symbols-outlined text-[16px] leading-none">swap_horiz</span>
+                <span>Scope: {{ scopeMode() === 'mine' ? 'My Courses' : 'All Courses' }}</span>
               </button>
-              <div class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-40 border border-gray-200" (click)="$event.stopPropagation()" [class.hidden]="!showCourseDropdown()">
-                <ul class="py-1 max-h-72 overflow-y-auto">
+
+              <!-- Term Chip -->
+              <div class="relative">
+                <button type="button" (click)="toggleTermDropdown(); $event.stopPropagation()"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        title="Click to edit term(s)">
+                  <span class="material-symbols-outlined text-[16px] leading-none">calendar_month</span>
+                  <span>Term: {{ selectedTerms().length ? (selectedTerms().join(', ')) : 'Select' }}</span>
+                  <span class="material-symbols-outlined text-[16px] leading-none text-pink-400">expand_more</span>
+                </button>
+                <div class="absolute left-0 mt-1 w-64 bg-white rounded-md shadow-lg z-30 border border-gray-200"
+                     (click)="$event.stopPropagation()" [class.hidden]="!termDropdownOpen()">
+                  <app-term-filter-dropdown selectionMode="multi" [selected]="selectedTerms()" (selectionChange)="onTermSelectionChange($event)"></app-term-filter-dropdown>
+                </div>
+              </div>
+
+              <!-- Organization Chip -->
+              <div class="relative">
+                <button type="button" (click)="toggleOrganizationDropdown(); $event.stopPropagation()"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        title="Click to choose organization">
+                  <span class="material-symbols-outlined text-[16px] leading-none">apartment</span>
+                  <span>Organization: {{ organizationFilter() || 'All' }}</span>
+                  <span class="material-symbols-outlined text-[16px] leading-none text-pink-400">expand_more</span>
+                </button>
+                <div class="absolute left-0 mt-1 w-80 bg-white rounded-md shadow-lg z-30 border border-gray-200"
+                     (click)="$event.stopPropagation()" [class.hidden]="!showOrganizationDropdown()">
+                  <div class="p-2 border-b border-gray-100">
+                    <input type="text" class="w-full text-xs rounded border-gray-300 focus:ring-pink-500 focus:border-pink-500"
+                           placeholder="Search organizations..." (input)="onOrganizationSearch($event)">
+                  </div>
+                  <ul class="py-1 max-h-72 overflow-y-auto text-xs">
+                    @for (item of filteredFlatOrganizationHierarchy(); track item.name + '-' + item.level) {
+                      <li>
+                        <button type="button" class="w-full text-left px-3 py-1 hover:bg-gray-50"
+                                (click)="selectOrganization(item.name)">
+                          <span class="inline-block" [style.width.px]="item.level * 12"></span>{{ item.name }}
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Course Chip -->
+              <div class="relative">
+                <button type="button" (click)="toggleCourseDropdown(); $event.stopPropagation()"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        title="Click to edit course/section">
+                  <span class="material-symbols-outlined text-[16px] leading-none">menu_book</span>
+                  <span>Course: {{ selectedSections().length ? selectedSections()[0] : (selectedCourses().length ? selectedCourses()[0] : 'Select') }}</span>
+                  <span class="material-symbols-outlined text-[16px] leading-none text-pink-400">expand_more</span>
+                </button>
+                <div class="absolute left-0 mt-1 w-80 bg-white rounded-md shadow-lg z-30 border border-gray-200"
+                     (click)="$event.stopPropagation()" [class.hidden]="!showCourseDropdown()">
+                <ul class="py-1 max-h-72 overflow-y-auto text-xs">
                   @for (code of courseOptions(); track code) {
                     <li class="px-2 py-1">
                       <div class="flex items-center">
@@ -175,57 +271,8 @@
                     </li>
                   }
                 </ul>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Content: Threads Table and Chat Panel -->
-      <section class="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden">
-        <!-- Threads Card (table-like) -->
-        <div class="bg-white shadow-lg rounded-lg border border-gray-200 flex flex-col w-full lg:w-[320px] flex-shrink-0">
-          <div class="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
-            <div class="text-sm font-semibold text-gray-700">Threads</div>
-            <button type="button" (click)="newThread()" class="relative z-10 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-white bg-pink-600 hover:bg-pink-700">
-              <span class="text-base leading-none">+</span>
-              New
-            </button>
-          </div>
-          <div class="flex-1 min-h-0 overflow-y-auto">
-            <table class="w-full text-sm text-left text-gray-600">
-                            <tbody>
-                @for (t of threads(); track t.id) {
-                  <tr class="bg-white border-b hover:bg-gray-50 transition-colors duration-200 cursor-pointer group" (click)="selectThread(t.id)" [ngClass]="selectedThreadId() === t.id ? 'bg-pink-50' : ''">
-                    <td class="px-4 py-2 font-medium text-gray-900 pr-20">{{ t.title && t.title.length > 60 ? (t.title | slice:0:60) + '…' : t.title }}</td>
-                    <td class="px-4 py-2 text-right opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <div class="flex items-center justify-end gap-1">
-                        <button type="button" (click)="startRenameThread(t.id, $event)" class="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded" title="Rename thread">
-                          <span class="material-symbols-outlined text-[16px] leading-none">edit</span>
-                        </button>
-                        <button type="button" (click)="deleteThread(t.id, $event)" class="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded" title="Delete thread">
-                          <span class="material-symbols-outlined text-[16px] leading-none">delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr class="bg-white border-b">
-                    <td colspan="2" class="px-4 py-6 text-center text-gray-500">No threads yet.</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Chat Card -->
-        <div class="bg-white shadow-lg rounded-lg border border-gray-200 flex flex-col min-h-0 flex-1">
-          <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-[20px] leading-none text-pink-600">smart_toy</span>
-              <h2 class="text-sm font-semibold text-gray-900">Conversation</h2>
-              @if (selectedThreadId()) { <span class="text-xs text-gray-500">· Active thread</span> }
             </div>
           </div>
 
@@ -238,62 +285,93 @@
                   <div class="mx-auto mb-4 sm:mb-6 h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 rounded-full bg-pink-600 text-white flex items-center justify-center shadow-lg">
                     <span class="material-symbols-outlined text-[32px] sm:text-[40px] lg:text-[48px] leading-none">smart_toy</span>
                   </div>
-                  
+
                   <!-- Welcome Message with responsive typography -->
                   <div class="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 mb-6 sm:mb-8 px-2">
-                    Hello, I am your AI teaching assistant. Ask me anything.
+                    @if (currentUserRole() === 'instructor') {
+                      Hello, I am your AI teaching assistant. Ask me about your courses and teaching materials.
+                    } @else {
+                      Hello, I am your AI teaching assistant. Ask me anything.
+                    }
                   </div>
-                  
+
                   <!-- Suggestion Options with responsive spacing and sizing -->
                   <div class="space-y-2 sm:space-y-3">
-                    <button type="button"
-                            (click)="handleSuggestionClick('Ask a question about my current courses')"
-                            class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
-                      <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">school</span>
-                      <span class="truncate">Ask a question about my current courses</span>
-                    </button>
-                    
-                    <button type="button"
-                            (click)="handleSuggestionClick('Ask a question about my past courses')"
-                            class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
-                      <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">history</span>
-                      <span class="truncate">Ask a question about my past courses</span>
-                    </button>
-                    
-                    <button type="button"
-                            (click)="handleSuggestionClick('Ask a question about courses I may want to take in the future')"
-                            class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
-                      <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">trending_up</span>
-                      <span class="truncate">Ask a question about courses I may want to take in the future</span>
-                    </button>
+                    @if (currentUserRole() === 'instructor') {
+                      <button type="button"
+                              (click)="handleSuggestionClick('How can I improve my course syllabus?')"
+                              class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
+                        <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">edit_note</span>
+                        <span class="truncate">How can I improve my course syllabus?</span>
+                      </button>
+
+                      <button type="button"
+                              (click)="handleSuggestionClick('What assignments do I have scheduled for my courses?')"
+                              class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
+                        <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">assignment</span>
+                        <span class="truncate">What assignments do I have scheduled for my courses?</span>
+                      </button>
+
+                      <button type="button"
+                              (click)="handleSuggestionClick('Help me prepare for upcoming lectures')"
+                              class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
+                        <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">co_present</span>
+                        <span class="truncate">Help me prepare for upcoming lectures</span>
+                      </button>
+                    } @else {
+                      <button type="button"
+                              (click)="handleSuggestionClick('Ask a question about my current courses')"
+                              class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
+                        <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">school</span>
+                        <span class="truncate">Ask a question about my current courses</span>
+                      </button>
+
+                      <button type="button"
+                              (click)="handleSuggestionClick('Ask a question about my past courses')"
+                              class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
+                        <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">history</span>
+                        <span class="truncate">Ask a question about my past courses</span>
+                      </button>
+
+                      <button type="button"
+                              (click)="handleSuggestionClick('Ask a question about courses I may want to take in the future')"
+                              class="w-full px-3 sm:px-5 py-3 sm:py-4 text-sm sm:text-base font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 rounded-lg border border-pink-200 transition-colors duration-200 text-left flex items-center gap-2 sm:gap-3">
+                        <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-pink-600 flex-shrink-0">trending_up</span>
+                        <span class="truncate">Ask a question about courses I may want to take in the future</span>
+                      </button>
+                    }
                   </div>
                 </div>
               </div>
             } @else {
               <div class="divide-y divide-gray-100">
                 @for (m of messages(); track m.ts) {
-                  <div class="px-4 py-3">
-                    <div class="flex items-center gap-2 text-[11px] text-gray-500 mb-1">
-                      <span class="inline-flex items-center gap-1 font-medium text-gray-700">
-                        @if (m.role === 'assistant') { <span class="material-symbols-outlined text-[16px] text-pink-600">smart_toy</span> } @else {
-                          <span class="h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold" [class]="getAvatarColor(currentStudentName())" [title]="currentStudentName()">{{ getInitials(currentStudentName()) }}</span>
-                        }
-                        {{ m.role === 'user' ? currentStudentName() : 'Simple TA' }}
-                      </span>
-                      <span>· {{ formatTime(m.ts) }}</span>
-                    </div>
-                    <div class="text-sm text-gray-900 whitespace-pre-wrap">{{ m.text }}</div>
-                    @if (m.citations?.length) {
-                      <div class="mt-2 flex flex-wrap gap-1.5">
-                        @for (c of m.citations; track c.docId) {
-                          <button type="button" (click)="openCitation(c.docId, c.label)" class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium bg-gray-50 text-gray-700 hover:bg-pink-50 hover:text-pink-700 border border-gray-200">
-                            <span class="material-symbols-outlined text-[14px] leading-none">open_in_new</span>
-                            {{ c.label }}
-                          </button>
-                        }
+                  @if (m.role === 'system') {
+                    <div class="px-4 py-2 text-[11px] text-gray-600 italic bg-gray-50">{{ m.text }}</div>
+                  } @else {
+                    <div class="px-4 py-3">
+                      <div class="flex items-center gap-2 text-[11px] text-gray-500 mb-1">
+                        <span class="inline-flex items-center gap-1 font-medium text-gray-700">
+                          @if (m.role === 'assistant') { <span class="material-symbols-outlined text-[16px] text-pink-600">smart_toy</span> } @else {
+                            <span class="h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold" [class]="getAvatarColor(currentStudentName())" [title]="currentStudentName()">{{ getInitials(currentStudentName()) }}</span>
+                          }
+                          {{ m.role === 'user' ? currentStudentName() : 'Simple TA' }}
+                        </span>
+                        <span>· {{ formatTime(m.ts) }}</span>
                       </div>
-                    }
-                  </div>
+                      <div class="text-sm text-gray-900 whitespace-pre-wrap">{{ m.text }}</div>
+                      @if (m.citations?.length) {
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                          @for (c of m.citations; track c.docId) {
+                            <button type="button" (click)="openCitation(c.docId, c.label)" class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium bg-gray-50 text-gray-700 hover:bg-pink-50 hover:text-pink-700 border border-gray-200">
+                              <span class="material-symbols-outlined text-[14px] leading-none">open_in_new</span>
+                              {{ c.label }}
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
                 }
 
                 <!-- Typing/Thinking Indicator -->
@@ -307,7 +385,7 @@
           <!-- Quick Prompts -->
           <div class="px-4 pt-2 pb-1 border-t border-gray-100">
             <div class="flex flex-wrap gap-2">
-              @for (qp of quickPrompts; track qp) {
+                @for (qp of quickPrompts(); track qp) {
                 <button type="button" (click)="quickPromptClick(qp)" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-pink-50 text-pink-700 hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-500">
                   <span class="material-symbols-outlined text-[16px] leading-none">bolt</span>
                   {{ qp }}
@@ -322,6 +400,9 @@
               <div class="flex-1">
                 <label for="simple-ta-input" class="sr-only">Message Simple TA</label>
                 <input id="simple-ta-input" type="text" class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ask a question about your course..." [value]="input()" (input)="input.set(($any($event.target)).value)" [disabled]="sending()" />
+
+	                <div class="text-[11px] text-gray-500 mt-1">{{ ghostContextText() }}</div>
+
               </div>
               <button type="submit" [disabled]="sending() || !input().trim().length" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-1 focus:ring-offset-white">
                 <span class="material-symbols-outlined text-[18px] leading-none">send</span>
@@ -334,6 +415,95 @@
     </div>
   </div>
 </div>
+
+<style>
+/* Thread list container - strict width containment */
+.thread-list {
+  width: 100%;
+  max-width: 384px;
+  overflow: hidden;
+}
+
+/* Thread row - fixed width to prevent overflow */
+.thread-row {
+  width: 100%;
+  max-width: 384px;
+  overflow: hidden;
+}
+
+/* Thread content with reduced padding */
+.thread-content {
+  position: relative;
+  width: 100%;
+  padding: 8px 12px; /* Reduced from px-4 py-2 */
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Thread title container */
+.thread-title-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.thread-title {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 60px; /* Space for action buttons */
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 20px;
+}
+
+/* Gradient overlay */
+.title-gradient {
+  position: absolute;
+  right: 60px; /* Align with button area */
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Action buttons overlay */
+.thread-actions {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to left, white, rgba(255, 255, 255, 0.8));
+  padding-left: 8px;
+}
+
+/* Show gradient when hovering over the thread row */
+.thread-row:hover .title-gradient {
+  opacity: 1;
+}
+
+/* Ensure the gradient is visible when buttons are visible */
+.thread-row:hover .thread-actions {
+  opacity: 1;
+}
+
+/* Empty state styling */
+.thread-content.text-center {
+  padding: 24px 12px;
+}
+</style>
 
 <!-- Rename Thread Modal -->
 @if (renameModalOpen()) {
@@ -348,9 +518,9 @@
         <form (submit)="$event.preventDefault(); saveRename()">
           <div class="mb-4">
             <label for="thread-title-input" class="block text-sm font-medium text-gray-700 mb-2">Thread Title</label>
-            <input id="thread-title-input" type="text" 
+            <input id="thread-title-input" type="text"
                    class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                   [value]="renameTitle()" 
+                   [value]="renameTitle()"
                    (input)="renameTitle.set(($any($event.target)).value)"
                    placeholder="Enter thread title..."
                    autofocus>
@@ -368,6 +538,28 @@
     </div>
   </div>
 }
+
+<!-- Context Change Warning Modal -->
+@if (showContextChangeModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/40" (click)="cancelContextChange()"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl w-[90vw] max-w-md overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+        <div class="text-sm font-semibold text-gray-900">Change filters?</div>
+        <button class="p-1 rounded-md hover:bg-gray-100" (click)="cancelContextChange()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="p-4 text-sm text-gray-700 space-y-2">
+        <p>You’re changing the context for this conversation. This may alter the assistant’s answers.</p>
+        <p>Continue here, or start a new thread with these filters?</p>
+      </div>
+      <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-end gap-2">
+        <button type="button" class="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50" (click)="startNewThreadFromPending()">Start new thread</button>
+        <button type="button" class="px-3 py-1.5 rounded-md text-white bg-pink-600 hover:bg-pink-700" (click)="continueContextChange()">Continue here</button>
+      </div>
+    </div>
+  </div>
+}
+
 
 <!-- Delete Confirmation Modal -->
 @if (deleteModalOpen()) {
@@ -440,6 +632,7 @@
               <div class="mt-5">
                 <div class="text-sm font-semibold text-gray-800 mb-2">Assignments</div>
                 <div class="space-y-2">
+
                   @for (a of modalDoc()?.syllabusDetails?.lmsAssignments; track a.name) {
                     <div [attr.id]="'assign-' + slugify(a.name || '')" class="p-2 rounded border border-gray-200" [class.ring-2]="highlightKey() && a.name?.toLowerCase().includes(highlightKey().toLowerCase())" [class.ring-pink-500]="highlightKey() && a.name?.toLowerCase().includes(highlightKey().toLowerCase())">
                       <div class="text-sm font-medium text-gray-900">{{ a.name }}</div>

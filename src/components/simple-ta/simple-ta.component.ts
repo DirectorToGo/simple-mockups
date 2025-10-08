@@ -2,20 +2,41 @@ import { Component, ChangeDetectionStrategy, inject, signal, input, output, comp
 import { CommonModule } from '@angular/common';
 import { GeminiService } from '../../services/gemini.service';
 import { DocumentService } from '../../services/document.service';
+import { TaBotService } from '../../services/ta-bot.service';
 import { Document } from '../../document.types';
 import { TermFilterDropdownComponent } from '../term-filter-dropdown/term-filter-dropdown.component';
 
 interface ChatMessage {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   text: string;
   ts: number;
   citations?: { docId: number; label: string }[];
 }
 
+// Thread-scoped filters and context history
+type ThreadFilters = {
+  scope: 'all' | 'mine';
+  terms: string[];
+  subject: string;
+  organization: string;
+  instructor: string;
+  courses: string[];
+  sections: string[];
+};
+
+type ContextHistoryEntry = {
+  timestamp: number;
+  filters: ThreadFilters;
+};
+
+
 interface Thread {
   id: number;
   title: string;
   messages: ChatMessage[];
+  filters: ThreadFilters;
+  contextHistory: ContextHistoryEntry[];
+  botId: string;
 }
 
 @Component({
@@ -29,6 +50,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   private gemini = inject(GeminiService);
   private documentService = inject(DocumentService);
   private host = inject(ElementRef<HTMLElement>);
+  private taBots = inject(TaBotService);
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
@@ -37,6 +59,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
 
   // Inputs
   currentStudentName = input<string>('');
+  currentUserRole = input<'student' | 'instructor' | 'designer'>('student');
 
   // Context scope & filters
   scopeMode = signal<'all' | 'mine'>('mine');
@@ -55,11 +78,48 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   showOrganizationDropdown = signal(false);
   showCourseDropdown = signal(false);
   showSectionDropdown = signal(false);
+  // Bot selection (Admin sees all, others see published + role-assigned)
+  botDropdownOpen = signal(false);
+  selectedBotId = signal<string | null>(null);
+  availableBots = computed(() => this.taBots.getBotsForRole(this.currentUserRole()));
+  selectedBot = computed(() => {
+    const bots = this.availableBots();
+    const id = this.selectedBotId();
+    if (id) return bots.find(b => b.id === id) || (bots[0] || null);
+    return bots[0] || null;
+  });
+  selectedTemperature = computed(() => this.selectedBot()?.temperature ?? 0.7);
+
+
+  // Context change confirmation state
+  showContextChangeModal = signal(false);
+  pendingFilters = signal<ThreadFilters | null>(null);
 
   expandedCourses = signal<string[]>([]);
 
   // Threads
   selectedThreadId = signal<number | null>(null);
+
+  // Search functionality
+  searchQuery = signal('');
+  filteredThreads = computed(() => {
+    const query = this.searchQuery().toLowerCase().trim();
+    if (!query) {
+      return this.threads();
+    }
+
+    return this.threads().filter(thread => {
+      // Search in thread title
+      const titleMatch = thread.title.toLowerCase().includes(query);
+
+      // Search in message content
+      const messageMatch = thread.messages.some(message =>
+        message.text.toLowerCase().includes(query)
+      );
+
+      return titleMatch || messageMatch;
+    });
+  });
 
   // Rename modal state
   renameModalOpen = signal(false);
@@ -80,20 +140,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     return this.documentService.documents().find(d => d.id === id) as Document;
   });
 
-  threads = signal<Thread[]>([
-    { id: 1, title: 'Questions about CS101 syllabus', messages: [
-      { role: 'user', text: 'Can you summarize the topics in CS 101?', ts: Date.now() - 1000 * 60 * 60 },
-      { role: 'assistant', text: 'CS 101 covers basics of programming, data structures, and problem solving.', ts: Date.now() - 1000 * 60 * 58 },
-    ]},
-    { id: 2, title: 'Clarifying assignment deadlines', messages: [
-      { role: 'user', text: 'When is Homework 2 due for my classes?', ts: Date.now() - 1000 * 60 * 40 },
-      { role: 'assistant', text: 'Homework 2 due dates vary by course; check the syllabus schedule section for each.', ts: Date.now() - 1000 * 60 * 38 },
-    ]},
-    { id: 3, title: 'Understanding grading policies', messages: [
-      { role: 'user', text: 'How is participation graded in my courses?', ts: Date.now() - 1000 * 60 * 20 },
-      { role: 'assistant', text: 'Participation often counts 10–15% and is detailed under "Grading scheme" in each syllabus.', ts: Date.now() - 1000 * 60 * 18 },
-    ]},
-  ]);
+  threads = signal<Thread[]>([]);
 
   // Chat state (current conversation view)
   messages = signal<ChatMessage[]>([]);
@@ -108,7 +155,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   private lastScrollTop = 0;
   private isStreaming = signal(false);
   private userManuallyScrolled = signal(false);
-  
+
   // Smooth scrolling animation state
   private streamingScrollAnimation: any;
   private lastScrollHeight = 0;
@@ -118,12 +165,27 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   private animationStartTime = 0;
   private lastAnimationTime = 0;
 
-  quickPrompts = [
-    'When is my next assignment due?',
-    'How is participation graded?',
-    'What topics are covered in this course?',
-    'What are the course learning objectives?'
-  ];
+  quickPrompts = computed(() => {
+    const bot = this.selectedBot();
+    if (bot && bot.defaultPrompts && bot.defaultPrompts.length) {
+      return bot.defaultPrompts;
+    }
+    if (this.currentUserRole() === 'instructor') {
+      return [
+        'How can I improve my syllabus?',
+        'What assignments are coming up?',
+        'Help me prepare lecture materials',
+        'What are the key topics to cover?'
+      ];
+    } else {
+      return [
+        'When is my next assignment due?',
+        'How is participation graded?',
+        'What topics are covered in this course?',
+        'What are the course learning objectives?'
+      ];
+    }
+  });
 
   // Derived / UI helpers
   termButtonText = computed(() => {
@@ -219,18 +281,21 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   showWelcomeInterface = computed(() => {
     const threadId = this.selectedThreadId();
     const messagesLength = this.messages().length;
-    
+
     // Show when no thread is selected or when a thread has no messages
     return !threadId || messagesLength === 0;
   });
 
   ngOnInit(): void {
+    // Clear any existing thread data for a fresh start
+    this.clearThreadData();
+    
     // Default terms to Current on first load
     const currentTerms = this.documentService.termsByGroup().Current;
     this.selectedTerms.set([...currentTerms]);
     // Restore from localStorage (per-user)
     this.restorePersistedState();
-    
+
     // Initialize scroll detection after view is ready
     setTimeout(() => {
       this.initializeScrollDetection();
@@ -246,21 +311,46 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     this.stopSmoothScrolling();
   }
 
+  // Clear all thread data for fresh start
+  private clearThreadData() {
+    try {
+      // Clear threads from localStorage for all users
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('simple-ta:threads:')) {
+          keys.push(key);
+        }
+      }
+      keys.forEach(key => localStorage.removeItem(key));
+      
+      // Clear in-memory threads
+      this.threads.set([]);
+      this.selectedThreadId.set(null);
+      this.messages.set([]);
+    } catch (error) {
+      console.warn('Failed to clear thread data:', error);
+    }
+  }
+
   // --- Threads ---
-  newThread() {
+  newThread(filters?: ThreadFilters) {
     const id = Math.max(0, ...this.threads().map(t => t.id)) + 1;
-    
-    // Create empty thread without welcome message so our enhanced welcome UI shows
-    const t: Thread = { id, title: 'New thread', messages: [] };
+    const currentBotId = this.selectedBot()?.id || '';
+
+    const f = filters ?? this.getDefaultFilters();
+    const t: Thread = { id, title: 'New thread', messages: [], filters: f, contextHistory: [{ timestamp: Date.now(), filters: { ...f } }], botId: currentBotId };
     this.threads.update(list => [t, ...list]);
-    
+
     this.selectedThreadId.set(id);
     this.messages.set([]);
-    
+    this.applyFiltersToSignals(f);
+
     // Reset manual scroll and auto-scroll to bottom when creating a new thread
     this.userManuallyScrolled.set(false);
     this.triggerAutoScroll();
     this.persistThreadsSnapshot();
+    this.updateUrlFromState();
     this.closeAllDropdowns();
   }
 
@@ -293,11 +383,15 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   selectThread(id: number) {
     this.selectedThreadId.set(id);
     const t = this.threads().find(x => x.id === id);
-    if (t) this.messages.set([...t.messages]);
+    if (t) {
+      this.messages.set([...t.messages]);
+      this.applyFiltersToSignals(t.filters || this.getDefaultFilters());
+    }
     // Ensure we start at the most recent message when opening a thread
     this.userManuallyScrolled.set(false);
     this.triggerAutoScroll();
     this.persistThreadsSnapshot();
+    this.updateUrlFromState();
     this.closeAllDropdowns();
   }
 
@@ -315,20 +409,20 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   saveRename() {
     const threadId = this.renameThreadId();
     const newTitle = this.renameTitle().trim();
-    
+
     if (threadId && newTitle) {
-      this.threads.update(list => 
+      this.threads.update(list =>
         list.map(t => t.id === threadId ? { ...t, title: newTitle } : t)
       );
       this.persistThreadsSnapshot();
-      
+
       // If this is the currently selected thread, update the messages reference
       if (this.selectedThreadId() === threadId) {
         const t = this.threads().find(x => x.id === threadId);
         if (t) this.messages.set([...t.messages]);
       }
     }
-    
+
     this.cancelRename();
   }
 
@@ -351,18 +445,18 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     const threadToDelete = this.threadToDelete();
     if (threadToDelete) {
       const threadId = threadToDelete.id;
-      
+
       // Remove the thread
       this.threads.update(list => list.filter(t => t.id !== threadId));
       this.persistThreadsSnapshot();
-      
+
       // If the deleted thread was selected, clear selection and messages
       if (this.selectedThreadId() === threadId) {
         this.selectedThreadId.set(null);
         this.messages.set([]);
       }
     }
-    
+
     this.cancelDelete();
   }
 
@@ -383,6 +477,156 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   onTermSelectionChange(terms: string[]) { this.selectedTerms.set(terms); this.persistState(); }
   selectSubject(val: string) { this.subjectFilter.set(val); this.persistState(); this.showSubjectDropdown.set(false); }
   onSubjectSearch(ev: Event) { this.subjectSearchQuery.set((ev.target as HTMLInputElement).value); }
+
+  // --- Thread-scoped filter helpers and context management ---
+  private defaultsKey() { return `simple-ta:defaults:${this.currentStudentName() || 'anon'}`; }
+
+  private getDefaultFilters(): ThreadFilters {
+    try {
+      const raw = localStorage.getItem(this.defaultsKey());
+      if (raw) {
+        const data = JSON.parse(raw);
+        return {
+          scope: data.scope === 'all' ? 'all' : 'mine',
+          terms: Array.isArray(data.terms) ? data.terms : [],
+          subject: data.subject || '',
+          organization: data.organization || '',
+          instructor: data.instructor || '',
+          courses: Array.isArray(data.courses) ? data.courses : [],
+          sections: Array.isArray(data.sections) ? data.sections : [],
+        } as ThreadFilters;
+      }
+    } catch {}
+    const currentTerms = this.documentService.termsByGroup().Current;
+    return { scope: 'mine', terms: currentTerms ? [...currentTerms] : [], subject: '', organization: '', instructor: '', courses: [], sections: [] };
+  }
+
+  saveCurrentFiltersAsDefault() {
+    try { localStorage.setItem(this.defaultsKey(), JSON.stringify(this.collectSignalsToFilters())); } catch {}
+  }
+
+  private getActiveThread(): Thread | null {
+    const id = this.selectedThreadId();
+    return this.threads().find(t => t.id === id) || null;
+  }
+
+  private collectSignalsToFilters(): ThreadFilters {
+    return {
+      scope: this.scopeMode(),
+      terms: [...this.selectedTerms()],
+      subject: this.subjectFilter() || '',
+      organization: this.organizationFilter() || '',
+      instructor: this.instructorFilter() || '',
+      courses: [...this.selectedCourses()],
+      sections: [...this.selectedSections()],
+    };
+  }
+
+  private applyFiltersToSignals(f: ThreadFilters) {
+    this.scopeMode.set(f.scope);
+    this.selectedTerms.set([...f.terms]);
+    this.subjectFilter.set(f.subject || '');
+    this.organizationFilter.set(f.organization || '');
+    this.instructorFilter.set(f.instructor || '');
+    this.selectedCourses.set([...f.courses]);
+    this.selectedSections.set([...f.sections]);
+  }
+
+  private logContextUpdateSystemMessage(f: ThreadFilters) {
+    const parts: string[] = [];
+    if (f.sections?.length) parts.push(`Course = ${f.sections[0]}`);
+    else if (f.courses?.length) parts.push(`Course = ${f.courses[0]}`);
+    if (f.terms?.length) parts.push(`Term = ${f.terms.join(', ')}`);
+    parts.push(`Scope = ${f.scope === 'mine' ? 'My Courses' : 'All Courses'}`);
+    const msg: ChatMessage = { role: 'system', text: `Context updated: ${parts.join(', ')}.`, ts: Date.now() };
+    this.messages.update(m => [...m, msg]);
+    const tid = this.selectedThreadId();
+    if (tid != null) {
+      this.threads.update(list => list.map(t => t.id === tid ? { ...t, messages: [...this.messages()] } : t));
+      this.persistThreadsSnapshot();
+    }
+  }
+
+  private getLastUserMessageText(): string | null {
+    const msgs = [...this.messages()].reverse();
+    const u = msgs.find(m => m.role === 'user');
+    return u ? u.text : null;
+  }
+
+  private maybeRegenerateLastAnswer() {
+    const lastUser = this.getLastUserMessageText();
+    if (!lastUser) return;
+    const context = this.buildCourseContext();
+    void (async () => {
+      let reply = '';
+      try {
+        reply = await this.safeNonStreamingReply(lastUser, context);
+      } catch {
+        reply = await this.mockReply(lastUser);
+      }
+      this.messages.update(msgs => [...msgs, { role: 'assistant', text: reply, ts: Date.now() }]);
+      const tid = this.selectedThreadId();
+      if (tid != null) {
+        this.threads.update(list => list.map(t => t.id === tid ? { ...t, messages: [...this.messages()] } : t));
+        this.persistThreadsSnapshot();
+      }
+      this.triggerAutoScroll();
+    })();
+  }
+
+  private updateUrlFromState() {
+    try {
+      const t = this.getActiveThread();
+      const params = new URLSearchParams();
+      if (t) {
+        params.set('tid', String(t.id));
+        const f = t.filters;
+        if (f.terms?.length) params.set('term', f.terms.join(','));
+        if (f.courses?.length) params.set('course', f.courses.join(','));
+        if (f.sections?.length) params.set('section', f.sections.join(','));
+        params.set('scope', f.scope);
+      }
+      const url = `${location.pathname}?${params.toString()}`;
+      window.history.replaceState({}, '', url);
+    } catch {}
+  }
+
+  ghostContextText = computed(() => {
+    const f = this.collectSignalsToFilters();
+    const parts: string[] = [];
+
+    // Scope
+    const scopeLabel = f.scope === 'mine' ? 'My Courses' : 'All Courses';
+    parts.push(scopeLabel);
+
+    // Terms (all)
+    if (f.terms && f.terms.length) {
+      parts.push(f.terms.join(', '));
+    }
+
+    // Organization
+    if (f.organization) {
+      parts.push(f.organization);
+    }
+
+    // Courses: prefer explicit course list; else derive from selected sections
+    let courseList: string[] = [];
+    if (f.courses?.length) {
+      courseList = [...f.courses];
+    } else if (f.sections?.length) {
+      const codes = new Set<string>();
+      for (const sec of f.sections) {
+        try { codes.add(this.extractCourseCode(sec)); } catch {}
+      }
+      courseList = Array.from(codes);
+    }
+    if (courseList.length) {
+      parts.push(courseList.join(', '));
+    }
+
+    return `Answering for ${parts.join(' • ')}.`;
+  });
+
   selectOrganization(val: string) { this.organizationFilter.set(val); this.persistState(); this.showOrganizationDropdown.set(false); }
   onOrganizationSearch(ev: Event) { this.organizationSearchQuery.set((ev.target as HTMLInputElement).value); }
   onInstructorFilter(ev: Event) { this.instructorFilter.set((ev.target as HTMLInputElement).value || ''); this.persistState(); }
@@ -414,13 +658,13 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
 
     // Push user message
     const userMsg: ChatMessage = { role: 'user', text, ts: Date.now() };
-    
+
     this.input.set('');
     this.sending.set(true);
-    
+
     // Reset manual scroll flag for new user message
     this.userManuallyScrolled.set(false);
-    
+
     // Trigger auto-scroll after user message is added
     this.triggerAutoScroll();
 
@@ -429,9 +673,12 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     if (!tid) {
       const id = Math.max(0, ...this.threads().map(t => t.id)) + 1;
       const title = this.autoTitle(text);
-      const t: Thread = { id, title, messages: [userMsg] };
+      const f = this.getDefaultFilters();
+      const currentBotId = this.selectedBot()?.id || '';
+      const t: Thread = { id, title, messages: [userMsg], filters: f, contextHistory: [{ timestamp: Date.now(), filters: { ...f } }], botId: currentBotId };
       this.threads.update(list => [t, ...list]);
       this.selectedThreadId.set(id);
+      this.applyFiltersToSignals(f);
       tid = id;
       this.persistThreadsSnapshot();
       // Update messages signal with the new thread's messages
@@ -470,7 +717,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
         // Start streaming
         this.isStreaming.set(true);
         let started = false;
-        
+
         await (this.gemini as any).generateSimpleTaReplyStream(text, context, (chunk: string) => {
           this.messages.update(msgs => {
             const copy = [...msgs];
@@ -490,11 +737,11 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
           const snap = this.messages();
           this.threads.update(list => list.map(t => t.id === tid ? { ...t, messages: [...snap] } : t));
           this.persistThreadsSnapshot();
-          
+
           // Trigger auto-scroll during streaming to follow the response
           this.triggerAutoScroll();
-        });
-        
+        }, this.selectedTemperature());
+
         reply = this.messages()[this.messages().length - 1]?.text || '';
       } catch {
         reply = await this.safeNonStreamingReply(text, context);
@@ -538,7 +785,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
 
   private async safeNonStreamingReply(text: string, context: string): Promise<string> {
     try {
-      return await this.gemini.generateSimpleTaReply(text, context);
+      return await this.gemini.generateSimpleTaReply(text, context, this.selectedTemperature());
     } catch {
       return await this.mockReply(text);
     }
@@ -550,7 +797,12 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     let scoped: Document[];
     if (this.scopeMode() === 'all') {
       scoped = syllabi;
+    } else if (this.currentUserRole() === 'instructor') {
+      // For instructors, show courses they teach or edit
+      const instructor = (this.currentStudentName() || '').trim();
+      scoped = syllabi.filter(d => d.instructor === instructor || d.editors.some(e => e.name === instructor));
     } else {
+      // For students, use enrollments
       const student = (this.currentStudentName() || '').trim();
       const enrollments = this.documentService.enrollments();
       const ids = new Set(enrollments.filter(e => e.student.name === student).map(e => (e as any).documentId as number));
@@ -579,12 +831,18 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
 
   private buildCourseContext(): string {
     const docs = this.getScopedDocs();
-    const student = (this.currentStudentName() || '').trim();
+    const userName = (this.currentStudentName() || '').trim();
 
     if (docs.length === 0) {
-      return this.scopeMode() === 'mine'
-        ? `Student ${student || 'Unknown'} has no courses in scope.`
-        : 'No courses available.';
+      if (this.currentUserRole() === 'instructor') {
+        return this.scopeMode() === 'mine'
+          ? `Instructor ${userName || 'Unknown'} has no courses assigned.`
+          : 'No courses available.';
+      } else {
+        return this.scopeMode() === 'mine'
+          ? `Student ${userName || 'Unknown'} has no courses in scope.`
+          : 'No courses available.';
+      }
     }
 
     const lines: string[] = [];
@@ -597,12 +855,23 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
           .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1))[0];
         if (future?.dueDate) nextDue = `; next due: ${future.name} on ${future.dueDate}`;
       }
-      lines.push(`${doc.name} (${doc.term}) — subject ${doc.subject}, instructor ${doc.instructor}${nextDue}`);
+
+      if (this.currentUserRole() === 'instructor') {
+        // For instructors, show more detailed context about their courses
+        const status = doc.status;
+        const published = doc.published ? 'Published' : 'Not Published';
+        lines.push(`${doc.name} (${doc.term}) — subject ${doc.subject}, status: ${status}, ${published}${nextDue}`);
+      } else {
+        // For students, show instructor info
+        lines.push(`${doc.name} (${doc.term}) — subject ${doc.subject}, instructor ${doc.instructor}${nextDue}`);
+      }
     }
 
     const scopeLabel = this.scopeMode() === 'all' ? 'All Courses' : 'My Courses';
-    const studentLine = this.scopeMode() === 'mine' ? `Student: ${student}\n` : '';
-    return `${studentLine}Scope: ${scopeLabel}\nCourses:\n- ` + lines.join('\n- ');
+    const userLine = this.scopeMode() === 'mine'
+      ? `${this.currentUserRole() === 'instructor' ? 'Instructor' : 'Student'}: ${userName}\n`
+      : '';
+    return `${userLine}Scope: ${scopeLabel}\nCourses:\n- ` + lines.join('\n- ');
   }
 
   // --- UI helpers ---
@@ -676,6 +945,77 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     void this.sendPrompt(suggestion);
   }
 
+  // --- Bot Selection ---
+  selectBot(botId: string) {
+    this.selectedBotId.set(botId);
+    this.ensureSelectedBotExpanded();
+    this.closeAllDropdowns();
+  }
+
+  isSelectedBot(botId: string): boolean {
+    return this.selectedBotId() === botId || (!this.selectedBotId() && this.availableBots()[0]?.id === botId);
+  }
+
+  // --- Bot-specific thread organization ---
+  expandedBots = signal<string[]>([]);
+
+  // Get threads for a specific bot
+  getThreadsForBot(botId: string): Thread[] {
+    return this.threads().filter(thread => thread.botId === botId);
+  }
+
+  // Get thread count for a bot
+  getThreadCountForBot(botId: string): number {
+    return this.getThreadsForBot(botId).length;
+  }
+
+  // Check if a bot section is expanded
+  isBotExpanded(botId: string): boolean {
+    return this.expandedBots().includes(botId);
+  }
+
+  // Toggle bot section expansion
+  toggleBotSection(botId: string) {
+    const expanded = [...this.expandedBots()];
+    const index = expanded.indexOf(botId);
+    if (index >= 0) {
+      expanded.splice(index, 1);
+    } else {
+      expanded.push(botId);
+    }
+    this.expandedBots.set(expanded);
+  }
+
+  // Get filtered threads for a specific bot
+  getFilteredThreadsForBot(botId: string): Thread[] {
+    const botThreads = this.getThreadsForBot(botId);
+    const query = this.searchQuery().toLowerCase().trim();
+    if (!query) {
+      return botThreads;
+    }
+
+    return botThreads.filter(thread => {
+      const titleMatch = thread.title.toLowerCase().includes(query);
+      const messageMatch = thread.messages.some(message =>
+        message.text.toLowerCase().includes(query)
+      );
+      return titleMatch || messageMatch;
+    });
+  }
+
+  // Auto-expand selected bot
+  private ensureSelectedBotExpanded() {
+    const selectedBotId = this.selectedBotId() || this.availableBots()[0]?.id;
+    if (selectedBotId && !this.isBotExpanded(selectedBotId)) {
+      this.toggleBotSection(selectedBotId);
+    }
+  }
+
+  // --- Search functionality ---
+  clearSearch() {
+    this.searchQuery.set('');
+  }
+
 
   // Mock fallback
   private async mockReply(userText: string): Promise<string> {
@@ -692,6 +1032,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     this.showOrganizationDropdown.set(false);
     this.showCourseDropdown.set(false);
     this.showSectionDropdown.set(false);
+    this.botDropdownOpen.set(false);
   }
 
   @HostListener('document:keydown.escape')
@@ -699,6 +1040,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     if (this.modalOpen()) this.closeCitation();
     if (this.renameModalOpen()) this.cancelRename();
     if (this.deleteModalOpen()) this.cancelDelete();
+    if (this.showContextChangeModal()) this.cancelContextChange();
     this.closeAllDropdowns();
   }
 
@@ -715,31 +1057,65 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   private threadsKey() { return `simple-ta:threads:${this.currentStudentName() || 'anon'}`; }
   private persistState() {
     try {
-      const data = {
-        scopeMode: this.scopeMode(),
-        selectedTerms: this.selectedTerms(),
-        subject: this.subjectFilter(),
-        organization: this.organizationFilter(),
-        instructor: this.instructorFilter(),
-        selectedCourses: this.selectedCourses(),
-        selectedSections: this.selectedSections(),
-      };
-      localStorage.setItem(this.storageKey(), JSON.stringify(data));
+      const t = this.getActiveThread();
+      if (!t) return;
+      const f = this.collectSignalsToFilters();
+      // If changing context on a thread with existing messages, confirm first
+      if (this.requiresContextChangeConfirm(t, f)) {
+        this.pendingFilters.set(f);
+        this.showContextChangeModal.set(true);
+        return;
+      }
+      this.applyFiltersToThread(t.id, f);
     } catch {}
+  }
+
+  private requiresContextChangeConfirm(t: Thread, f: ThreadFilters): boolean {
+    if (!t || !t.messages?.length) return false;
+    try { return JSON.stringify(t.filters) !== JSON.stringify(f); } catch { return true; }
+  }
+
+  private applyFiltersToThread(threadId: number, f: ThreadFilters) {
+    const before = this.threads().find(x => x.id === threadId);
+    const hadMessages = !!(before && before.messages && before.messages.length);
+
+    this.threads.update(list => list.map(x => x.id === threadId ? { ...x, filters: { ...f }, contextHistory: [...x.contextHistory, { timestamp: Date.now(), filters: { ...f } }] } : x));
+    this.persistThreadsSnapshot();
+    this.updateUrlFromState();
+
+    // Only log system messages or trigger regen after the first user message exists
+    if (hadMessages) {
+      this.logContextUpdateSystemMessage(f);
+      this.maybeRegenerateLastAnswer();
+    }
+  }
+
+  continueContextChange() {
+    const t = this.getActiveThread();
+    const f = this.pendingFilters();
+    if (!t || !f) { this.showContextChangeModal.set(false); return; }
+    this.applyFiltersToThread(t.id, f);
+    this.pendingFilters.set(null);
+    this.showContextChangeModal.set(false);
+  }
+
+  startNewThreadFromPending() {
+    const f = this.pendingFilters();
+    if (!f) { this.showContextChangeModal.set(false); return; }
+    this.pendingFilters.set(null);
+    this.showContextChangeModal.set(false);
+    this.newThread(f);
+  }
+
+  cancelContextChange() {
+    // Revert signals back to active thread's filters
+    const t = this.getActiveThread();
+    if (t) this.applyFiltersToSignals(t.filters);
+    this.pendingFilters.set(null);
+    this.showContextChangeModal.set(false);
   }
   private restorePersistedState() {
     try {
-      const raw = localStorage.getItem(this.storageKey());
-      if (raw) {
-        const data = JSON.parse(raw);
-        if (data.scopeMode) this.scopeMode.set(data.scopeMode);
-        if (Array.isArray(data.selectedTerms)) this.selectedTerms.set(data.selectedTerms);
-        if (typeof data.subject === 'string') this.subjectFilter.set(data.subject);
-        if (typeof data.organization === 'string') this.organizationFilter.set(data.organization);
-        if (typeof data.instructor === 'string') this.instructorFilter.set(data.instructor);
-        if (Array.isArray(data.selectedCourses)) this.selectedCourses.set(data.selectedCourses);
-        if (Array.isArray(data.selectedSections)) this.selectedSections.set(data.selectedSections);
-      }
       // Restore threads/messages
       const trRaw = localStorage.getItem(this.threadsKey());
       if (trRaw) {
@@ -749,10 +1125,22 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
           this.selectedThreadId.set(data.selectedThreadId);
           const t = this.threads().find(x => x.id === data.selectedThreadId);
           this.messages.set(t ? [...t.messages] : []);
+          if (t?.filters) {
+            this.applyFiltersToSignals(t.filters);
+          } else {
+            this.applyFiltersToSignals(this.getDefaultFilters());
+          }
           // Ensure the chat view starts at the bottom on restore
           this.userManuallyScrolled.set(false);
           setTimeout(() => this.triggerAutoScroll(), 0);
+          this.updateUrlFromState();
+        } else {
+          // No selection; initialize signals with defaults
+          this.applyFiltersToSignals(this.getDefaultFilters());
         }
+      } else {
+        // Nothing persisted; initialize defaults
+        this.applyFiltersToSignals(this.getDefaultFilters());
       }
     } catch {}
   }
@@ -829,7 +1217,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     if (this.scrollTimeout) {
       clearTimeout(this.scrollTimeout);
     }
-    
+
     this.scrollTimeout = setTimeout(() => {
       this.updateScrollPosition();
     }, 50);
@@ -842,17 +1230,17 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
     const scrollTop = container.scrollTop;
     const scrollHeight = container.scrollHeight;
     const clientHeight = container.clientHeight;
-    
+
     // Check if user is at bottom (with 50px threshold)
     const atBottom = scrollHeight - scrollTop - clientHeight <= 50;
     this.isUserAtBottom.set(atBottom);
-    
+
     // Detect manual scroll during streaming
     if (this.isStreaming() && !atBottom) {
       // User scrolled away from bottom during streaming
       this.userManuallyScrolled.set(true);
     }
-    
+
     // If user scrolls to bottom, clear manual scroll flag and new messages indicator
     if (atBottom) {
       this.userManuallyScrolled.set(false);
@@ -860,7 +1248,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
         this.hasNewMessages.set(false);
       }
     }
-    
+
     this.lastScrollTop = scrollTop;
   }
 
@@ -893,7 +1281,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
         top: container.scrollHeight,
         behavior: 'smooth'
       });
-      
+
       // Fallback for browsers that don't support smooth scrolling
       setTimeout(() => {
         if (container.scrollTop + container.clientHeight < container.scrollHeight - 10) {
@@ -943,7 +1331,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
   }
 
   // --- Smooth Scrolling Animation Methods ---
-  
+
   /**
    * Starts smooth scrolling animation during AI streaming
    * Uses requestAnimationFrame for smooth 60fps scrolling
@@ -995,12 +1383,12 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
       const currentScrollTop = container.scrollTop;
       const currentScrollHeight = container.scrollHeight;
       const maxScrollTop = currentScrollHeight - container.clientHeight;
-      
+
       // Update target if content height changed
       if (currentScrollHeight !== this.lastScrollHeight) {
         this.targetScrollTop = maxScrollTop;
         this.lastScrollHeight = currentScrollHeight;
-        
+
         // Add a boost to velocity when content grows to catch up quickly
         this.currentScrollVelocity = Math.max(this.currentScrollVelocity, 2);
         this.debugScrollState('Content growth detected', {
@@ -1012,12 +1400,12 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
 
       // Calculate distance to target
       const distance = this.targetScrollTop - currentScrollTop;
-      
+
       // If we're very close to the target, snap to it and continue monitoring
       if (Math.abs(distance) < 0.5) {
         container.scrollTop = this.targetScrollTop;
         this.currentScrollVelocity = 0;
-        
+
         // Continue animation to monitor for content changes during streaming
         this.scrollAnimationId = requestAnimationFrame(this.animateSmoothScroll);
         return;
@@ -1026,20 +1414,20 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
       // Enhanced physics-based animation with time-based calculations
       const springStrength = 0.15; // Increased for more responsive movement
       const damping = 0.8; // Slightly reduced for more fluid motion
-      
+
       // Calculate acceleration (spring force)
       const acceleration = distance * springStrength;
-      
+
       // Update velocity with damping and time-based scaling
       this.currentScrollVelocity = (this.currentScrollVelocity + acceleration * deltaTime / 16) * damping;
-      
+
       // Apply velocity to scroll position with time-based scaling
       const newScrollTop = currentScrollTop + this.currentScrollVelocity * deltaTime / 16;
-      
+
       // Apply the scroll with bounds checking
       const boundedScrollTop = Math.max(0, Math.min(newScrollTop, maxScrollTop));
       container.scrollTop = boundedScrollTop;
-      
+
       this.debugScrollState('Animation frame', {
         currentScroll: currentScrollTop,
         targetScroll: this.targetScrollTop,
@@ -1047,7 +1435,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
         velocity: this.currentScrollVelocity,
         newScroll: boundedScrollTop
       });
-      
+
       // Continue the animation
       this.scrollAnimationId = requestAnimationFrame(this.animateSmoothScroll);
     } catch (error) {
@@ -1064,7 +1452,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
       cancelAnimationFrame(this.scrollAnimationId);
       this.scrollAnimationId = null;
     }
-    
+
     // Reset animation state
     this.currentScrollVelocity = 0;
     this.streamingScrollAnimation = null;
@@ -1076,7 +1464,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
    */
   private triggerAutoScroll(): void {
     this.shouldAutoScroll.set(true);
-    
+
     // During streaming, also trigger immediate smooth scroll
     if (this.isStreaming()) {
       // Use setTimeout to ensure DOM updates are applied
@@ -1105,7 +1493,7 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
 
     // Force instant scroll as fallback
     container.scrollTop = container.scrollHeight;
-    this.debugScrollState('Fallback scroll executed', { 
+    this.debugScrollState('Fallback scroll executed', {
       scrollHeight: container.scrollHeight,
       scrollTop: container.scrollTop
     });
@@ -1121,18 +1509,18 @@ export class SimpleTaComponent implements OnInit, AfterViewChecked {
 
     const currentHeight = container.scrollHeight;
     const hasGrowth = currentHeight > this.lastScrollHeight;
-    
+
     if (hasGrowth && this.isStreaming()) {
       // Content grew during streaming, update target
       this.targetScrollTop = currentHeight - container.clientHeight;
       this.lastScrollHeight = currentHeight;
-      
+
       // Restart animation if needed
       if (!this.scrollAnimationId) {
         this.startSmoothScrollingDuringStreaming();
       }
     }
-    
+
     return hasGrowth;
   }
 }

@@ -10,15 +10,16 @@ import { PlanAdminComponent } from './components/plan-admin/plan-admin.component
 import { SimpleTaComponent } from './components/simple-ta/simple-ta.component';
 
 import { PlanAdminService } from './services/plan-admin.service';
+import { TaAdminComponent } from './components/ta-admin/ta-admin.component';
 
 type ColumnKey = 'term' | 'name' | 'status' | 'editors' | 'type';
 type SortDirection = 'asc' | 'desc';
-type Page = 'documents' | 'plan-admin' | 'accounts' | 'simple-ta';
+type Page = 'documents' | 'plan-admin' | 'accounts' | 'simple-ta' | 'ta-admin';
 
 interface NavItem {
   page: Page;
   label: string;
-  icon: 'documents' | 'plan' | 'chat';
+  icon: 'documents' | 'plan' | 'chat' | 'automation';
 }
 
 interface OrganizationNode {
@@ -30,7 +31,7 @@ interface OrganizationNode {
   selector: 'app-root',
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, EditModalComponent, PlanTaskEditorComponent, TermFilterDropdownComponent, PlanAdminComponent, SimpleTaComponent],
+  imports: [CommonModule, EditModalComponent, PlanTaskEditorComponent, TermFilterDropdownComponent, PlanAdminComponent, SimpleTaComponent, TaAdminComponent],
   host: {
     '(document:click)': 'onDocumentClick($event)',
   }
@@ -58,10 +59,12 @@ export class AppComponent {
   canEdit = computed(() => this.currentUserRole() !== 'student');
   canSeePlanAdmin = computed(() => this.currentUserRole() === 'designer' || this.currentUserRole() === 'faculty');
   canSeeAccounts = this.canSeePlanAdmin;
-  canSeeSimpleTA = computed(() => this.currentUserRole() === 'student');
+  canSeeSimpleTA = computed(() => this.currentUserRole() === 'student' || this.currentUserRole() === 'instructor' || this.currentUserRole() === 'designer');
+  canSeeTaAdmin = computed(() => this.currentUserRole() === 'designer');
   navItems: NavItem[] = [
     { page: 'documents', label: 'Document Track', icon: 'documents' },
     { page: 'simple-ta', label: 'Simple TA', icon: 'chat' },
+    { page: 'ta-admin', label: 'TA Admin', icon: 'automation' },
     { page: 'plan-admin', label: 'Plan Admin', icon: 'plan' },
   ];
 
@@ -73,6 +76,8 @@ export class AppComponent {
         return 'Plan Admin';
       case 'accounts':
         return 'Accounts';
+      case 'ta-admin':
+        return 'TA Admin';
       default:
         return 'Document Track';
     }

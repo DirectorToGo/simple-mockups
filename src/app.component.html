@@ -66,7 +66,7 @@
       <div class="h-full flex flex-col">
         <nav id="sidebar-navigation" class="flex-1 py-3 px-3 space-y-1.5" aria-label="Primary">
           @for (navItem of navItems; track navItem.page) {
-            @if ((navItem.page !== 'plan-admin' || canSeePlanAdmin()) && (navItem.page !== 'simple-ta' || canSeeSimpleTA())) {
+            @if ((navItem.page !== 'plan-admin' || canSeePlanAdmin()) && (navItem.page !== 'simple-ta' || canSeeSimpleTA()) && (navItem.page !== 'ta-admin' || canSeeTaAdmin())) {
               <button
                 type="button"
                 (click)="navigateTo(navItem.page)"
@@ -91,6 +91,9 @@
                     }
                     @case ('chat') {
                       <span class="material-symbols-outlined text-[20px] leading-none">smart_toy</span>
+                    }
+                    @case ('automation') {
+                      <span class="material-symbols-outlined text-[20px] leading-none">automation</span>
                     }
                   }
                 </span>
@@ -555,7 +558,11 @@
             </section>
           } @else if (currentPage() === 'simple-ta') {
             <div class="h-[calc(100vh-96px)] -mx-2 sm:-mx-4">
-              <app-simple-ta class="h-full" [currentStudentName]="currentUserName()" (openSource)="navigateTo('documents')"></app-simple-ta>
+              <app-simple-ta class="h-full" [currentStudentName]="currentUserName()" [currentUserRole]="currentUserRole()" (openSource)="navigateTo('documents')"></app-simple-ta>
+            </div>
+          } @else if (currentPage() === 'ta-admin') {
+            <div class="bg-white/0">
+              <app-ta-admin></app-ta-admin>
             </div>
           } @else if (currentPage() === 'accounts') {
             <h1 class="text-2xl font-semibold text-gray-900 mb-4">Accounts</h1>
