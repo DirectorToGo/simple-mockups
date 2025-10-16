@@ -996,10 +996,11 @@
       <div class="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center rounded-bl-lg">
         <div class="flex items-center space-x-4">
           <label class="flex items-center cursor-pointer">
-            <div class="relative">
+            <div class="relative flex items-center justify-center w-6 h-6 border-2 rounded-md transition-colors" 
+                 [ngClass]="task().active ? 'border-pink-600 bg-pink-600' : 'border-gray-300 bg-white hover:border-gray-400'">
               <input type="checkbox" class="sr-only" [checked]="task().active" (change)="updateTaskActive($event)">
-              <div class="block w-14 h-8 rounded-full" [class]="task().active ? 'bg-pink-600' : 'bg-gray-200'"></div>
-              <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform" [class.translate-x-6]="task().active"></div>
+              <span class="material-symbols-outlined text-lg transition-colors" 
+                    [ngClass]="task().active ? 'text-white' : 'text-gray-400'">check</span>
             </div>
             <span class="ml-3 text-sm font-medium text-gray-700">Active</span>
           </label>

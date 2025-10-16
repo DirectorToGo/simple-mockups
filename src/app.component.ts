@@ -11,6 +11,8 @@ import { SimpleTaComponent } from './components/simple-ta/simple-ta.component';
 
 import { PlanAdminService } from './services/plan-admin.service';
 import { TaAdminComponent } from './components/ta-admin/ta-admin.component';
+import { LoginComponent } from './components/login/login.component';
+import { AuthService } from './services/auth.service';
 
 type ColumnKey = 'term' | 'name' | 'status' | 'editors' | 'type';
 type SortDirection = 'asc' | 'desc';
@@ -31,7 +33,7 @@ interface OrganizationNode {
   selector: 'app-root',
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, EditModalComponent, PlanTaskEditorComponent, TermFilterDropdownComponent, PlanAdminComponent, SimpleTaComponent, TaAdminComponent],
+  imports: [CommonModule, EditModalComponent, PlanTaskEditorComponent, TermFilterDropdownComponent, PlanAdminComponent, SimpleTaComponent, TaAdminComponent, LoginComponent],
   host: {
     '(document:click)': 'onDocumentClick($event)',
   }
@@ -39,8 +41,10 @@ interface OrganizationNode {
 export class AppComponent {
   private documentService = inject(DocumentService);
   private planAdminService = inject(PlanAdminService);
+  private authService = inject(AuthService);
 
   // State Signals
+  isAuthenticated = this.authService.isAuthenticated;
   allDocuments = this.documentService.documents;
   editingDocument = signal<Document | null>(null);
   activeDropdown = signal<string | null>(null);
@@ -563,6 +567,13 @@ export class AppComponent {
     this.currentUserRole.set('student');
     this.currentUserName.set('Alice Student');
     this.profileDropdownOpen.set(false);
+    this.currentPage.set('documents');
+  }
+
+  logout() {
+    this.authService.logout();
+    this.profileDropdownOpen.set(false);
+    this.siteSettingsDropdownOpen.set(false);
     this.currentPage.set('documents');
   }
 
